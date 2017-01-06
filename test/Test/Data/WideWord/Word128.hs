@@ -3,7 +3,7 @@ module Test.Data.WideWord.Word128
   ( testWord128
   ) where
 
-import Data.Bits (shiftL)
+import Data.Bits ((.&.), shiftL)
 import Data.Word (Word32, Word64)
 import Data.WideWord
 
@@ -43,9 +43,42 @@ testWord128 = describe "Word128:" $ do
     let w128 = Word128 0 (fromIntegral a0)
         e128 = fromEnum w128
     toInteger e128 `shouldBe` toInteger a0
-    toInteger128 (toEnum e128 :: Word128) `shouldBe` fromIntegral a0
+    toInteger128 (toEnum e128 :: Word128) `shouldBe` toInteger a0
+
+  prop "addition" $ \ (a1, a0, b1, b0) ->
+    toInteger128 (Word128 a1 a0 + Word128 b1 b0) `shouldBe` correctWord128 (mkInteger a1 a0 + mkInteger b1 b0)
+
+  prop "subtraction" $ \ (a1, a0, b1, b0) -> do
+    let ai = mkInteger a1 a0
+        bi = mkInteger b1 b0
+        expected = ai + (1 `shiftL` 128) - bi
+    toInteger128 (Word128 a1 a0 - Word128 b1 b0) `shouldBe` correctWord128 expected
+
+  prop "multiplication" $ \ (a1, a0, b1, b0) ->
+    toInteger128 (Word128 a1 a0 * Word128 b1 b0) `shouldBe` correctWord128 (mkInteger a1 a0 * mkInteger b1 b0)
+
+  prop "negate" $ \ (a1, a0) ->
+    toInteger128 (negate (Word128 a1 a0)) `shouldBe` correctWord128 (negate $ mkInteger a1 a0)
+
+  prop "abs" $ \ (a1, a0) ->
+    toInteger128 (abs (Word128 a1 a0)) `shouldBe` correctWord128 (abs $ mkInteger a1 a0)
+
+  prop "signum" $ \ (a1, a0) ->
+    toInteger128 (signum $ Word128 a1 a0) `shouldBe` signum (mkInteger a1 a0)
+
+  prop "fromInteger" $ \ (a1, a0) -> do
+    let w128 = fromInteger $ mkInteger a1 a0
+    (word128Hi64 w128, word128Lo64 w128) `shouldBe` (a1, a0)
 
 -- -----------------------------------------------------------------------------
 
 mkInteger :: Word64 -> Word64 -> Integer
 mkInteger a1 a0 = fromIntegral a1 `shiftL` 64 + fromIntegral a0
+
+correctWord128 :: Integer -> Integer
+correctWord128 i
+  | i >= 0 && i <= maxWord128 = i
+  | otherwise = i .&. maxWord128
+  where
+    maxWord128 = (1 `shiftL` 128) - 1
+
