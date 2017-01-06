@@ -11,6 +11,7 @@ module Data.WideWord.Word128
   ( Word128 (..)
   , byteSwapWord128
   , showHexWord128
+  , toInteger128
   , zeroWord128
   ) where
 
@@ -49,6 +50,16 @@ instance Read Word128 where
 instance Ord Word128 where
   compare = compare128
 
+instance Bounded Word128 where
+  minBound = zeroWord128
+  maxBound = Word128 maxBound maxBound
+
+instance Enum Word128 where
+  succ = succ128
+  pred = pred128
+  toEnum = toEnum128
+  fromEnum = fromEnum128
+
 -- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.
 
@@ -58,6 +69,31 @@ compare128 (Word128 a1 a0) (Word128 b1 b0) =
     EQ -> compare a0 b0
     LT -> LT
     GT -> GT
+
+-- -----------------------------------------------------------------------------
+-- Functions for `Enum` instance.
+
+{-# INLINABLE succ128 #-}
+succ128 :: Word128 -> Word128
+succ128 (Word128 a1 a0) =
+  case succ a0 of
+    0 -> Word128 (succ a1) 0
+    s -> Word128 a1 s
+
+{-# INLINABLE pred128 #-}
+pred128 :: Word128 -> Word128
+pred128 (Word128 a1 a0) =
+  case a0 of
+    0 -> Word128 (pred a1) maxBound
+    _ -> Word128 a1 (pred a0)
+
+{-# INLINABLE toEnum128 #-}
+toEnum128 :: Int -> Word128
+toEnum128 i = Word128 0 (toEnum i)
+
+{-# INLINABLE fromEnum128 #-}
+fromEnum128 :: Word128 -> Int
+fromEnum128 (Word128 _ a0) = fromEnum a0
 
 -- -----------------------------------------------------------------------------
 -- Helpers.
