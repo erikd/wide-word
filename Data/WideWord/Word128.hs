@@ -20,6 +20,7 @@ module Data.WideWord.Word128
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 
 import GHC.Base
+import GHC.Real ((%))
 import GHC.Word (Word64 (..), byteSwap64)
 
 import Numeric (showHex)
@@ -97,6 +98,9 @@ instance FiniteBits Word128 where
   finiteBitSize _ = 128
   countLeadingZeros = countLeadingZeros128
   countTrailingZeros = countTrailingZeros128
+
+instance Real Word128 where
+  toRational x = toInteger128 x % 1
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.
