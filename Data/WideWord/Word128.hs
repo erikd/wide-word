@@ -17,7 +17,7 @@ module Data.WideWord.Word128
   , zeroWord128
   ) where
 
-import Data.Bits (shiftL, shiftR)
+import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 
 import GHC.Base
 import GHC.Word (Word64 (..), byteSwap64)
@@ -71,6 +71,32 @@ instance Num Word128 where
   abs = id
   signum = signum128
   fromInteger = fromInteger128
+
+instance Bits Word128 where
+  (.&.) = and128
+  (.|.) = or128
+  xor = xor128
+  complement = complement128
+  shiftL = shiftL128
+  unsafeShiftL = shiftL128
+  shiftR = shiftR128
+  unsafeShiftR = shiftR128
+  rotateL = rotateL128
+  rotateR = rotateR128
+
+  bitSize _ = 128
+  bitSizeMaybe _ = Just 128
+  isSigned _ = False
+
+  testBit = testBit128
+  bit = bit128
+
+  popCount = popCount128
+
+instance FiniteBits Word128 where
+  finiteBitSize _ = 128
+  countLeadingZeros = countLeadingZeros128
+  countTrailingZeros = countTrailingZeros128
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.
@@ -152,6 +178,113 @@ signum128 _ = oneWord128
 fromInteger128 :: Integer -> Word128
 fromInteger128 i =
   Word128 (fromIntegral $ i `shiftR` 64) (fromIntegral i)
+
+-- -----------------------------------------------------------------------------
+-- Functions for `Bits` instance.
+
+{-# INLINABLE and128 #-}
+and128 :: Word128 -> Word128 -> Word128
+and128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+  Word128 (W64# (and# a1 b1)) (W64# (and# a0 b0))
+
+{-# INLINABLE or128 #-}
+or128 :: Word128 -> Word128 -> Word128
+or128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+  Word128 (W64# (or# a1 b1)) (W64# (or# a0 b0))
+
+{-# INLINABLE xor128 #-}
+xor128 :: Word128 -> Word128 -> Word128
+xor128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+  Word128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+
+{-# INLINABLE complement128 #-}
+complement128 :: Word128 -> Word128
+complement128 (Word128 a1 a0) = Word128 (complement a1) (complement a0)
+
+-- Probably not worth inlining this.
+shiftL128 :: Word128 -> Int -> Word128
+shiftL128 w@(Word128 a1 a0) s
+  | s == 0 = w
+  | s < 0 = shiftL128 w (128 - (abs s `mod` 128))
+  | s >= 128 = zeroWord128
+  | s == 64 = Word128 a0 0
+  | s > 64 = Word128 (a0 `shiftL` (s - 64)) 0
+  | otherwise =
+      Word128 s1 s0
+      where
+        s0 = a0 `shiftL` s
+        s1 = a1 `shiftL` s + a0 `shiftR` (64 - s)
+
+-- Probably not worth inlining this.
+shiftR128 :: Word128 -> Int -> Word128
+shiftR128 w@(Word128 a1 a0) s
+  | s < 0 = zeroWord128
+  | s == 0 = w
+  | s >= 128 = zeroWord128
+  | s == 64 = Word128 0 a1
+  | s > 64 = Word128 0 (a1 `shiftR` (s - 64))
+  | otherwise =
+      Word128 s1 s0
+      where
+        s1 = a1 `shiftR` s
+        s0 = a0 `shiftR` s + a1 `shiftL` (64 - s)
+
+rotateL128 :: Word128 -> Int -> Word128
+rotateL128 w@(Word128 a1 a0) r
+  | r < 0 = zeroWord128
+  | r == 0 = w
+  | r >= 128 = rotateL128 w (r `mod` 128)
+  | r == 64 = Word128 a0 a1
+  | r > 64 = rotateL128 (Word128 a0 a1) (r `mod` 64)
+  | otherwise =
+      Word128 s1 s0
+      where
+        s0 = a0 `shiftL` r + a1 `shiftR` (64 - r)
+        s1 = a1 `shiftL` r + a0 `shiftR` (64 - r)
+
+rotateR128 :: Word128 -> Int -> Word128
+rotateR128 w@(Word128 a1 a0) r
+  | r < 0 = rotateR128 w (128 - (abs r `mod` 128))
+  | r == 0 = w
+  | r >= 128 = rotateR128 w (r `mod` 128)
+  | r == 64 = Word128 a0 a1
+  | r > 64 = rotateR128 (Word128 a0 a1) (r `mod` 64)
+  | otherwise =
+      Word128 s1 s0
+      where
+        s0 = a0 `shiftR` r + a1 `shiftL` (64 - r)
+        s1 = a1 `shiftR` r + a0 `shiftL` (64 - r)
+
+testBit128 :: Word128 -> Int -> Bool
+testBit128 (Word128 a1 a0) i
+  | i < 0 = False
+  | i >= 128 = False
+  | i >= 64 = testBit a1 (i - 64)
+  | otherwise = testBit a0 i
+
+bit128 :: Int -> Word128
+bit128 indx
+  | indx < 0 = zeroWord128
+  | indx >= 128 = zeroWord128
+  | otherwise = shiftL128 oneWord128 indx
+
+popCount128 :: Word128 -> Int
+popCount128 (Word128 a1 a0) = popCount a1 + popCount a0
+
+-- -----------------------------------------------------------------------------
+-- Functions for `FiniteBits` instance.
+
+countLeadingZeros128 :: Word128 -> Int
+countLeadingZeros128 (Word128 a1 a0) =
+  case countLeadingZeros a1 of
+    64 -> 64 +  countLeadingZeros a0
+    res -> res
+
+countTrailingZeros128 :: Word128 -> Int
+countTrailingZeros128 (Word128 a1 a0) =
+  case countTrailingZeros a0 of
+    64 -> 64 + countTrailingZeros a1
+    res -> res
 
 -- -----------------------------------------------------------------------------
 -- Helpers.

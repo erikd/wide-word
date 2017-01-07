@@ -3,7 +3,8 @@ module Test.Data.WideWord.Word128
   ( testWord128
   ) where
 
-import Data.Bits ((.&.), shiftL)
+import Data.Bits ((.&.), (.|.), bit, countLeadingZeros, countTrailingZeros, popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
+import Data.Int (Int16)
 import Data.Word (Word32, Word64)
 import Data.WideWord
 
@@ -69,6 +70,76 @@ testWord128 = describe "Word128:" $ do
   prop "fromInteger" $ \ (a1, a0) -> do
     let w128 = fromInteger $ mkInteger a1 a0
     (word128Hi64 w128, word128Lo64 w128) `shouldBe` (a1, a0)
+
+  prop "logical and/or/xor" $ \ (a1, a0, b1, b0) -> do
+    toInteger128 (Word128 a1 a0 .&. Word128 b1 b0) `shouldBe` (mkInteger a1 a0 .&. mkInteger b1 b0)
+    toInteger128 (Word128 a1 a0 .|. Word128 b1 b0) `shouldBe` (mkInteger a1 a0 .|. mkInteger b1 b0)
+    toInteger128 (xor (Word128 a1 a0) (Word128 b1 b0)) `shouldBe` xor (mkInteger a1 a0) (mkInteger b1 b0)
+
+  prop "logical shiftL" $ \ (a1, a0) shift ->
+    let safeShift = if shift < 0 then 128 - (abs shift `mod` 128) else shift in
+    toInteger128 (shiftL (Word128 a1 a0) shift) `shouldBe` correctWord128 (shiftL (mkInteger a1 a0) safeShift)
+
+  prop "logical shiftR" $ \ (a1, a0) shift ->
+    let expected = if shift < 0 then 0 else correctWord128 (shiftR (mkInteger a1 a0) shift) in
+    toInteger128 (shiftR (Word128 a1 a0) shift) `shouldBe` expected
+
+  -- Use `Int16` here to force a uniform distribution across the `Int16` range
+  -- (standard QuickCkeck generator for `Int` doesn't give an even distribution).
+  prop "logical rotateL" $ \ (a1, a0) (r :: Int16) -> do
+    let rot = fromIntegral r
+        i128 = mkInteger a1 a0
+        expected
+          | rot < 0 = 0
+          | otherwise =
+              correctWord128 (i128 `shiftL` erot + i128 `shiftR` (128 - (erot `mod` 128)))
+              where
+                erot
+                  | rot < 0 = 128 - (abs rot `mod` 128)
+                  | otherwise = rot `mod` 128
+    toInteger128 (rotateL (Word128 a1 a0) rot) `shouldBe` expected
+
+  prop "logical rotateR" $ \ (a1, a0) (r :: Int16) -> do
+    let rot = fromIntegral r
+        i128 = mkInteger a1 a0
+        expected =
+          correctWord128 $ i128 `shiftR` erot + i128 `shiftL` (128 - erot)
+          where
+            erot
+              | rot < 0 = 128 - (abs rot `mod` 128)
+              | otherwise = rot `mod` 128
+    toInteger128 (rotateR (Word128 a1 a0) rot) `shouldBe` expected
+
+  prop "testBit" $ \ (a1, a0) (b :: Int16) -> do
+    let idx = fromIntegral b
+        expected
+          | idx < 0 = False
+          | idx > 128 = False
+          | otherwise = testBit (mkInteger a1 a0) idx
+    testBit (Word128 a1 a0) idx `shouldBe` expected
+
+  prop "bit" $ \ (b :: Int16) -> do
+    let idx = fromIntegral b
+        expected
+          | idx < 0 = 0
+          | idx >= 128 = 0
+          | otherwise = bit idx
+    toInteger128 (bit idx :: Word128) `shouldBe` expected
+
+  prop "popCount" $ \ (a1, a0) ->
+    popCount (Word128 a1 a0) `shouldBe` popCount (mkInteger a1 a0)
+
+  prop "countLeadingZeros" $ \ (a1, a0) -> do
+    let expected = if a1 == 0
+                    then 64 + countLeadingZeros a0
+                    else countLeadingZeros a1
+    countLeadingZeros (Word128 a1 a0) `shouldBe` expected
+
+  prop "countTrailingZeros" $ \ (a1, a0) -> do
+    let expected = if a0 == 0
+                    then 64 + countTrailingZeros a1
+                    else countTrailingZeros a0
+    countTrailingZeros (Word128 a1 a0) `shouldBe` expected
 
 -- -----------------------------------------------------------------------------
 
