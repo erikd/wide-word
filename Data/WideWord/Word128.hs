@@ -13,14 +13,13 @@ module Data.WideWord.Word128
   ( Word128 (..)
   , byteSwapWord128
   , showHexWord128
-  , toInteger128
   , zeroWord128
   ) where
 
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 
 import GHC.Base
-import GHC.Real ((%))
+import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), byteSwap64)
 
 import Numeric (showHex)
@@ -101,6 +100,15 @@ instance FiniteBits Word128 where
 
 instance Real Word128 where
   toRational x = toInteger128 x % 1
+
+instance Integral Word128 where
+  quot n d = fst (quotRem128 n d)
+  rem n d = snd (quotRem128 n d)
+  div n d = fst (quotRem128 n d)
+  mod n d = snd (quotRem128 n d)
+  quotRem = quotRem128
+  divMod = quotRem128
+  toInteger = toInteger128
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.
@@ -291,7 +299,64 @@ countTrailingZeros128 (Word128 a1 a0) =
     res -> res
 
 -- -----------------------------------------------------------------------------
--- Helpers.
+-- Functions for `Integral` instance.
+
+quotRem128 :: Word128 -> Word128 -> (Word128, Word128)
+quotRem128 num@(Word128 n1 n0) den@(Word128 d1 d0)
+  | n1 == 0 && d1 == 0 = quotRemTwo n0 d0
+  | n1 < d1 = (zeroWord128, num)
+  | d1 == 0 = quotRemThree num d0
+  | otherwise = quotRemFour num den
+
+
+quotRemFour :: Word128 -> Word128 -> (Word128, Word128)
+quotRemFour num@(Word128 n1 _) den@(Word128 d1 d0)
+  | n1 == d1 = quotRemFourX num d0
+  | otherwise = (q, r)
+      where
+        qtest = quot n1 d1
+        diff = times128 den (Word128 0 qtest)
+        (q, r) = case compare128 num diff of
+                    EQ -> (Word128 0 qtest, zeroWord128)
+                    GT -> (Word128 0 qtest, minus128 num diff)
+                    LT -> let qx = Word128 0 (qtest - 1)
+                              diffx = times128 den qx
+                          in (qx, minus128 num diffx)
+
+
+{-# INLINE quotRemFourX #-}
+quotRemFourX :: Word128 -> Word64 -> (Word128, Word128)
+quotRemFourX num@(Word128 _ n0) d0 =
+  case compare n0 d0 of
+    LT -> (zeroWord128, num)
+    EQ -> (oneWord128, zeroWord128)
+    GT -> (Word128 0 1, Word128 0 (n0 - d0))
+
+
+{-# INLINE quotRemThree #-}
+quotRemThree :: Word128 -> Word64 -> (Word128, Word128)
+quotRemThree num@(Word128 n1 n0) den
+  | den == 0 = divZeroError
+  | den == 1 = (num, zeroWord128)
+  | n1 < den = case quotRemWord2 n1 n0 den of
+                (q, r) -> (Word128 0 q, Word128 0 r)
+  | otherwise =
+      case quotRem n1 den of
+        (q1, r1) -> case quotRemWord2 r1 n0 den of
+                      (q0, r0) -> (Word128 q1 q0, Word128 0 r0)
+
+{-# INLINE quotRemWord2 #-}
+quotRemWord2 :: Word64 -> Word64 -> Word64 -> (Word64, Word64)
+quotRemWord2 (W64# n1) (W64# n0) (W64# d) =
+  case quotRemWord2# n1 n0 d of
+    (# q, r #) -> (W64# q, W64# r)
+
+
+{-# INLINE quotRemTwo #-}
+quotRemTwo :: Word64 -> Word64 -> (Word128, Word128)
+quotRemTwo n0 d0 =
+  case quotRem n0 d0 of
+    (q, r) -> (Word128 0 q, Word128 0 r)
 
 toInteger128 :: Word128 -> Integer
 toInteger128 (Word128 a1 a0) = fromIntegral a1 `shiftL` 64 + fromIntegral a0
@@ -304,4 +369,3 @@ zeroWord128 = Word128 0 0
 
 oneWord128 :: Word128
 oneWord128 = Word128 0 1
-

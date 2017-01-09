@@ -10,6 +10,7 @@ import Data.WideWord
 
 import Test.Hspec (Spec, describe, shouldBe)
 import Test.Hspec.QuickCheck (prop)
+import Test.QuickCheck.Modifiers (NonZero (..))
 
 
 testWord128 :: Spec
@@ -144,6 +145,25 @@ testWord128 = describe "Word128:" $ do
                     else countTrailingZeros a0
     countTrailingZeros (Word128 a1 a0) `shouldBe` expected
 
+  prop "quotRem (both upper words zero)" $ \ (a0, NonZero b0) -> do
+    let (aq128, ar128) = quotRem (Word128 0 a0) (Word128 0 b0)
+    (toInteger128 aq128, toInteger128 ar128) `shouldBe` quotRem (mkInteger 0 a0) (mkInteger 0 b0)
+
+  prop "quotRem (denominator upper word zero)" $ \ (NonZero a1, a0, NonZero b0) -> do
+    let (aq128, ar128) = quotRem (Word128 a1 a0) (Word128 0 b0)
+    (toInteger128 aq128, toInteger128 ar128) `shouldBe` quotRem (mkInteger a1 a0) (mkInteger 0 b0)
+
+  -- Don't need to test `quot` or `rem` because they are implemented by applying
+  -- `fst` or `snd` to the output of `quotRem`.
+  prop "quotRem (full)" $ \ (a1, a0, NonZero b1, b0) -> do
+    let (aq128, ar128) = quotRem (Word128 a1 a0) (Word128 b1 b0)
+    (toInteger128 aq128, toInteger128 ar128) `shouldBe` quotRem (mkInteger a1 a0) (mkInteger b1 b0)
+
+  -- For unsigned values `quotRem` and `divMod` should give the same results.
+  prop "divMod (full)" $ \ (a1, a0, NonZero b1, b0) -> do
+    let (aq128, ar128) = divMod (Word128 a1 a0) (Word128 b1 b0)
+    (toInteger128 aq128, toInteger128 ar128) `shouldBe` divMod (mkInteger a1 a0) (mkInteger b1 b0)
+
 -- -----------------------------------------------------------------------------
 
 mkInteger :: Word64 -> Word64 -> Integer
@@ -156,3 +176,5 @@ correctWord128 i
   where
     maxWord128 = (1 `shiftL` 128) - 1
 
+toInteger128 :: Word128 -> Integer
+toInteger128 = toInteger
