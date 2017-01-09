@@ -3,7 +3,7 @@ import Control.Monad (when)
 import Test.Data.WideWord.Word128
 
 import Test.Hspec (Spec)
-import Test.Hspec.Runner (defaultConfig, hspecWithResult, summaryFailures)
+import Test.Hspec.Runner (configQuickCheckMaxSuccess, defaultConfig, hspecWithResult, summaryFailures)
 
 import System.Exit (exitFailure, exitSuccess)
 
@@ -11,11 +11,12 @@ import System.Exit (exitFailure, exitSuccess)
 
 main :: IO ()
 main = do
-  summary <- hspecWithResult defaultConfig testAll
+  summary <- hspecWithResult config testAll
   when (summaryFailures summary == 0)
     exitSuccess
   exitFailure
-
+  where
+    config = defaultConfig { configQuickCheckMaxSuccess = Just 100000 }
 
 testAll :: Spec
 testAll =
