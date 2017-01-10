@@ -3,6 +3,8 @@ module Test.Data.WideWord.Word128
   ( testWord128
   ) where
 
+import Control.Exception (evaluate)
+
 import Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros, popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
 import Data.Int (Int16)
 import Data.Word (Word32, Word64)
@@ -11,7 +13,7 @@ import Data.WideWord
 import Foreign (allocaBytes)
 import Foreign.Storable (Storable (..))
 
-import Test.Hspec (Spec, describe, shouldBe)
+import Test.Hspec (Spec, describe, errorCall, it, shouldBe, shouldThrow)
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck.Modifiers (NonZero (..))
 
@@ -38,11 +40,21 @@ testWord128 = describe "Word128:" $ do
   prop "read" $ \ (a1, a0) ->
     read (show $ Word128 a1 a0) `shouldBe` Word128 a1 a0
 
-  prop "succ / pred" $ \ a0 -> do
-    -- Only test on the lower word because `succ maxBound` and  `pred minBound`
-    -- result in exceptions.
-    toInteger128 (succ $ Word128 1 a0) `shouldBe` succ (mkInteger 1 a0)
-    toInteger128 (pred $ Word128 1 a0) `shouldBe` pred (mkInteger 1 a0)
+  prop "succ" $ \ (a1, a0) ->
+    if a1 == maxBound && a0 == maxBound
+      then evaluate (succ $ Word128 a1 a0) `shouldThrow` errorCall "Enum.succ{Word128}: tried to take `succ' of maxBound"
+      else toInteger128 (succ $ Word128 a1 a0) `shouldBe` succ (mkInteger a1 a0)
+
+  prop "pred" $ \ (a1, a0) ->
+    if a1 == 0 && a0 == 0
+      then evaluate (pred $ Word128 a1 a0) `shouldThrow` errorCall "Enum.pred{Word128}: tried to take `pred' of minBound"
+      else toInteger128 (pred $ Word128 a1 a0) `shouldBe` pred (mkInteger a1 a0)
+
+  it "succ maxBound throws error" $
+    evaluate (succ $ Word128 maxBound maxBound) `shouldThrow` errorCall "Enum.succ{Word128}: tried to take `succ' of maxBound"
+
+  it "pred minBount throws error" $
+    evaluate (pred $ Word128 0 0) `shouldThrow` errorCall "Enum.pred{Word128}: tried to take `pred' of minBound"
 
   prop "toEnum / fromEnum" $ \ (a0 :: Word32) -> do
     let w128 = Word128 0 (fromIntegral a0)

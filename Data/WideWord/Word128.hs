@@ -34,6 +34,7 @@ import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
 import GHC.Base
+import GHC.Enum (predError, succError)
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), byteSwap64)
 
@@ -146,19 +147,21 @@ compare128 (Word128 a1 a0) (Word128 b1 b0) =
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.
 
-{-# INLINABLE succ128 #-}
 succ128 :: Word128 -> Word128
-succ128 (Word128 a1 a0) =
-  case a0 + 1 of
-    0 -> Word128 (a1 + 1) 0
-    s -> Word128 a1 s
+succ128 (Word128 a1 a0)
+  | a1 == maxBound && a0 == maxBound = succError "Word128"
+  | otherwise =
+      case a0 + 1 of
+        0 -> Word128 (a1 + 1) 0
+        s -> Word128 a1 s
 
-{-# INLINABLE pred128 #-}
 pred128 :: Word128 -> Word128
-pred128 (Word128 a1 a0) =
-  case a0 of
-    0 -> Word128 (a1 - 1) maxBound
-    _ -> Word128 a1 (a0 - 1)
+pred128 (Word128 a1 a0)
+  | a1 == 0 && a0 == 0 = predError "Word128"
+  | otherwise =
+      case a0 of
+        0 -> Word128 (a1 - 1) maxBound
+        _ -> Word128 a1 (a0 - 1)
 
 {-# INLINABLE toEnum128 #-}
 toEnum128 :: Int -> Word128
