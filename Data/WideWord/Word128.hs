@@ -4,11 +4,20 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
--- | This module provides an opaque unsigned 128 bit value with the usual set
--- of typeclass instances one would expect for a fixed width unsigned integer
--- type.
--- Operations like addition, subtraction and multiplication etc provide a
--- "modulo 2^128" result as one would expect from a fixed width unsigned word.
+-----------------------------------------------------------------------------
+---- |
+---- Module      :  Data.WideWord.Word128
+----
+---- Maintainer  :  erikd@mega-nerd.com
+---- Stability   :  experimental
+---- Portability :  non-portable (GHC extensions and primops)
+----
+---- This module provides an opaque unsigned 128 bit value with the usual set
+---- of typeclass instances one would expect for a fixed width unsigned integer
+---- type.
+---- Operations like addition, subtraction and multiplication etc provide a
+---- "modulo 2^128" result as one would expect from a fixed width unsigned word.
+-------------------------------------------------------------------------------
 
 #include <MachDeps.h>
 
