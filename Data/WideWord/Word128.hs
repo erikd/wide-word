@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -9,6 +10,8 @@
 -- Operations like addition, subtraction and multiplication etc provide a
 -- "modulo 2^128" result as one would expect from a fixed width unsigned word.
 
+#include <MachDeps.h>
+
 module Data.WideWord.Word128
   ( Word128 (..)
   , byteSwapWord128
@@ -17,6 +20,9 @@ module Data.WideWord.Word128
   ) where
 
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
+
+import Foreign.Ptr (Ptr, castPtr)
+import Foreign.Storable (Storable (..))
 
 import GHC.Base
 import GHC.Real ((%), divZeroError)
@@ -109,6 +115,14 @@ instance Integral Word128 where
   quotRem = quotRem128
   divMod = quotRem128
   toInteger = toInteger128
+
+instance Storable Word128 where
+  sizeOf _ = 2 * sizeOf (0 :: Word64)
+  alignment _ = 2 * alignment (0 :: Word64)
+  peek = peek128
+  peekElemOff = peekElemOff128
+  poke = poke128
+  pokeElemOff = pokeElemOff128
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.
@@ -362,6 +376,27 @@ toInteger128 :: Word128 -> Integer
 toInteger128 (Word128 a1 a0) = fromIntegral a1 `shiftL` 64 + fromIntegral a0
 
 -- -----------------------------------------------------------------------------
+-- Functions for `Integral` instance.
+
+peek128 :: Ptr Word128 -> IO Word128
+peek128 ptr =
+  Word128 <$> peekElemOff (castPtr ptr) index1 <*> peekElemOff (castPtr ptr) index0
+
+peekElemOff128 :: Ptr Word128 -> Int -> IO Word128
+peekElemOff128 ptr idx =
+  Word128 <$> peekElemOff (castPtr ptr) (2 * idx + index1)
+            <*> peekElemOff (castPtr ptr) (2 * idx + index0)
+
+poke128 :: Ptr Word128 -> Word128 -> IO ()
+poke128 ptr (Word128 a1 a0) =
+  pokeElemOff (castPtr ptr) index1 a1 >> pokeElemOff (castPtr ptr) index0 a0
+
+pokeElemOff128 :: Ptr Word128 -> Int -> Word128 -> IO ()
+pokeElemOff128 ptr idx (Word128 a1 a0) = do
+  pokeElemOff (castPtr ptr) (2 * idx + index0) a0
+  pokeElemOff (castPtr ptr) (2 * idx + index1) a1
+
+-- -----------------------------------------------------------------------------
 -- Constants.
 
 zeroWord128 :: Word128
@@ -369,3 +404,13 @@ zeroWord128 = Word128 0 0
 
 oneWord128 :: Word128
 oneWord128 = Word128 0 1
+
+-- Use these indices to get the peek/poke ordering endian correct.
+index0, index1 :: Int
+#if WORDS_BIGENDIAN
+index0 = 1
+index1 = 0
+#else
+index0 = 0
+index1 = 1
+#endif

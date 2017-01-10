@@ -8,6 +8,9 @@ import Data.Int (Int16)
 import Data.Word (Word32, Word64)
 import Data.WideWord
 
+import Foreign (allocaBytes)
+import Foreign.Storable (Storable (..))
+
 import Test.Hspec (Spec, describe, shouldBe)
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck.Modifiers (NonZero (..))
@@ -163,6 +166,19 @@ testWord128 = describe "Word128:" $ do
   prop "divMod (full)" $ \ (a1, a0, NonZero b1, b0) -> do
     let (aq128, ar128) = divMod (Word128 a1 a0) (Word128 b1 b0)
     (toInteger128 aq128, toInteger128 ar128) `shouldBe` divMod (mkInteger a1 a0) (mkInteger b1 b0)
+
+  prop "peek / poke" $ \ (a1, a0) -> do
+    ar <- allocaBytes (sizeOf zeroWord128) $ \ ptr -> do
+                    poke ptr $ Word128 a1 a0
+                    peek ptr
+    toInteger128 ar `shouldBe` mkInteger a1 a0
+
+  prop "peekElemOff / pokeElemOff" $ \ (a1, a0, b1, b0) -> do
+    (ar, br) <- allocaBytes (2 * sizeOf zeroWord128) $ \ ptr -> do
+                    pokeElemOff ptr 0 $ Word128 a1 a0
+                    pokeElemOff ptr 1 $ Word128 b1 b0
+                    (,) <$> peekElemOff ptr 0 <*>  peekElemOff ptr 1
+    (toInteger128 ar, toInteger128 br) `shouldBe` (mkInteger a1 a0, mkInteger b1 b0)
 
 -- -----------------------------------------------------------------------------
 
