@@ -33,7 +33,7 @@ import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
-import GHC.Base
+import GHC.Base (and#, int2Word#, minusWord#, not#, or#, plusWord#, plusWord2#, quotRemWord2#, subWordC#, timesWord#, timesWord2#, xor#)
 import GHC.Enum (predError, succError)
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), byteSwap64)
