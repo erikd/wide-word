@@ -30,6 +30,7 @@ library
 
   exposed-modules:     Data.WideWord
                      , Data.WideWord.Word128
+                     , Data.WideWord.Int128
 
   build-depends:       base                          >= 4.8         && < 5.0
                      , ghc-prim

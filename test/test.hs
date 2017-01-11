@@ -1,5 +1,6 @@
 import Control.Monad (when)
 
+import Test.Data.WideWord.Int128
 import Test.Data.WideWord.Word128
 
 import Test.Hspec (Spec)
@@ -19,6 +20,7 @@ main = do
     config = defaultConfig { configQuickCheckMaxSuccess = Just 100000 }
 
 testAll :: Spec
-testAll =
+testAll = do
   testWord128
+  testInt128
 
