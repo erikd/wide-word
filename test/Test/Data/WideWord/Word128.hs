@@ -3,7 +3,7 @@ module Test.Data.WideWord.Word128
   ( testWord128
   ) where
 
-import Data.Bits ((.&.), (.|.), bit, countLeadingZeros, countTrailingZeros, popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
+import Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros, popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
 import Data.Int (Int16)
 import Data.Word (Word32, Word64)
 import Data.WideWord
@@ -75,6 +75,9 @@ testWord128 = describe "Word128:" $ do
     toInteger128 (Word128 a1 a0 .&. Word128 b1 b0) `shouldBe` (mkInteger a1 a0 .&. mkInteger b1 b0)
     toInteger128 (Word128 a1 a0 .|. Word128 b1 b0) `shouldBe` (mkInteger a1 a0 .|. mkInteger b1 b0)
     toInteger128 (xor (Word128 a1 a0) (Word128 b1 b0)) `shouldBe` xor (mkInteger a1 a0) (mkInteger b1 b0)
+
+  prop "complement" $ \ (a1, a0) ->
+    toInteger128 (complement $ Word128 a1 a0) `shouldBe` mkInteger (complement a1) (complement a0)
 
   prop "logical shiftL" $ \ (a1, a0) shift ->
     let safeShift = if shift < 0 then 128 - (abs shift `mod` 128) else shift in
