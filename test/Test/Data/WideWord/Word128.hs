@@ -30,9 +30,8 @@ testWord128 = describe "Word128:" $ do
   prop "show" $ \ (a1, a0) ->
     show (Word128 a1 a0) `shouldBe` show (toInteger128 a1 a0)
 
-  prop "read" $ \ (a1, a0) -> do
-    let i = show (toInteger128 a1 a0)
-    read i `shouldBe` Word128 a1 a0
+  prop "read" $ \ (a1, a0) ->
+    read (show $ Word128 a1 a0) `shouldBe` Word128 a1 a0
 
 -- -----------------------------------------------------------------------------
 
