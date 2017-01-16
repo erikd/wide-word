@@ -33,7 +33,8 @@ import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
-import GHC.Base (and#, int2Word#, minusWord#, not#, or#, plusWord#, plusWord2#, quotRemWord2#, subWordC#, timesWord#, timesWord2#, xor#)
+import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, plusWord2#
+                , quotRemWord2#, subWordC#, timesWord#, timesWord2#, xor#)
 import GHC.Enum (predError, succError)
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), byteSwap64)
@@ -133,6 +134,25 @@ instance Storable Word128 where
   peekElemOff = peekElemOff128
   poke = poke128
   pokeElemOff = pokeElemOff128
+
+-- -----------------------------------------------------------------------------
+-- Rewrite rules.
+
+{-# RULES
+"fromIntegral :: Word128 -> Word128" fromIntegral = id :: Word128 -> Word128
+  #-}
+
+{-# RULES
+"fromIntegral :: Int -> Word128"     fromIntegral = \(I# i#) -> Word128 (W64# 0##) (W64# (int2Word# i#))
+"fromIntegral :: Word- > Word128"    fromIntegral = Word128 0 . fromIntegral
+"fromIntegral :: Word32 -> Word128"  fromIntegral = Word128 0 . fromIntegral
+"fromIntegral :: Word64 -> Word128"  fromIntegral = Word128 0
+
+"fromIntegral :: Word128 -> Int"     fromIntegral = \(Word128 _ w) -> fromIntegral w
+"fromIntegral :: Word128 -> Word"    fromIntegral = \(Word128 _ w) -> fromIntegral w
+"fromIntegral :: Word128 -> Word32"  fromIntegral = \(Word128 _ w) -> fromIntegral w
+"fromIntegral :: Word128 -> Word64"  fromIntegral = \(Word128 _ w) -> w
+  #-}
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.
