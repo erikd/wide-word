@@ -139,6 +139,25 @@ instance Storable Int128 where
   pokeElemOff = pokeElemOff128
 
 -- -----------------------------------------------------------------------------
+-- Rewrite rules.
+
+{-# RULES
+"fromIntegral :: Int128 -> Int128" fromIntegral = id :: Int128 -> Int128
+  #-}
+
+{-# RULES
+"fromIntegral :: Int -> Int128"     fromIntegral = \(I# i#) -> Int128 (W64# 0##) (W64# (int2Word# i#))
+"fromIntegral :: Word- > Int128"    fromIntegral = Int128 0 . fromIntegral
+"fromIntegral :: Word32 -> Int128"  fromIntegral = Int128 0 . fromIntegral
+"fromIntegral :: Word64 -> Int128"  fromIntegral = Int128 0
+
+"fromIntegral :: Int128 -> Int"     fromIntegral = \(Int128 _ w) -> fromIntegral w
+"fromIntegral :: Int128 -> Word"    fromIntegral = \(Int128 _ w) -> fromIntegral w
+"fromIntegral :: Int128 -> Word32"  fromIntegral = \(Int128 _ w) -> fromIntegral w
+"fromIntegral :: Int128 -> Word64"  fromIntegral = \(Int128 _ w) -> w
+  #-}
+
+-- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.
 
 compare128 :: Int128 -> Int128 -> Ordering
