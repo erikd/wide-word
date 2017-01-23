@@ -13,6 +13,7 @@ description:
   annotations, `INLINEABLE` pragmas and unboxed values and operations where
   appropriate.
 homepage:            https://github.com/erikd/wide-word
+bug-reports:         https://github.com/erikd/wide-word/issues/
 license:             BSD2
 license-file:        LICENSE
 author:              Erik de Castro Lopo
@@ -21,12 +22,14 @@ copyright:           Copyright (c) 2017 Erik de Castro Lopo <erikd@mega-nerd.com
 category:            Data
 build-type:          Simple
 extra-source-files:  ChangeLog.md
+stability:           provisional
 cabal-version:       >=1.10
 
 library
   default-language:   Haskell2010
   ghc-options:        -Wall -fwarn-tabs
   hs-source-dirs:    .
+  other-extensions:  StrictData
 
   exposed-modules:     Data.WideWord
                      , Data.WideWord.Word128
@@ -34,7 +37,6 @@ library
 
   build-depends:       base                          >= 4.8         && < 5.0
                      , ghc-prim
-                     , bytestring                    >= 0.10
 
 test-suite test
   default-language:   Haskell2010
