@@ -1,5 +1,7 @@
 # wide-word
 
+[![Build Status](https://secure.travis-ci.org/erikd/wide-word.svg?branch=master)](http://travis-ci.org/erikd/wide-word)
+
 A Haskell library providing `Word128` and `Int128` data types with all the
 standard type class instances including `Show`, `Read`, `Ord`, `Bounded`,
 `Enum`, `Num`, `Bits`, `FiniteBits`, `Real`, `Integral` and `Storable`.
