@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                wide-word
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            Data types for large but fixed width signed and unsigned integers
 description:
   A library to provide data types for large (ie > 64 bits) but fixed width signed
