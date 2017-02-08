@@ -29,6 +29,8 @@ module Data.WideWord.Int128
   , zeroInt128
   ) where
 
+import Control.DeepSeq (NFData (..))
+
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 
 import Data.WideWord.Word128
@@ -137,6 +139,9 @@ instance Storable Int128 where
   peekElemOff = peekElemOff128
   poke = poke128
   pokeElemOff = pokeElemOff128
+
+instance NFData Int128 where
+  rnf (Int128 a1 a0) = rnf a1 `seq` rnf a0
 
 -- -----------------------------------------------------------------------------
 -- Rewrite rules.
