@@ -133,7 +133,7 @@ testWord128 = describe "Word128:" $ do
     let idx = fromIntegral b
         expected
           | idx < 0 = False
-          | idx > 128 = False
+          | idx >= 128 = False
           | otherwise = testBit (mkInteger a1 a0) idx
     testBit (Word128 a1 a0) idx `shouldBe` expected
 
