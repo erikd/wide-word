@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -200,7 +201,7 @@ plus128 :: Int128 -> Int128 -> Int128
 plus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# s1) (W64# s0)
   where
-    (# c1, s0 #) = plusWord2# a0 b0
+    !(# c1, s0 #) = plusWord2# a0 b0
     s1a = plusWord# a1 b1
     s1 = plusWord# c1 s1a
 
@@ -209,7 +210,7 @@ minus128 :: Int128 -> Int128 -> Int128
 minus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# d1) (W64# d0)
   where
-    (# d0, c1 #) = subWordC# a0 b0
+    !(# d0, c1 #) = subWordC# a0 b0
     a1c = minusWord# a1 (int2Word# c1)
     d1 = minusWord# a1c b1
 
@@ -217,7 +218,7 @@ times128 :: Int128 -> Int128 -> Int128
 times128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# p1) (W64# p0)
   where
-    (# c1, p0 #) = timesWord2# a0 b0
+    !(# c1, p0 #) = timesWord2# a0 b0
     p1a = timesWord# a1 b0
     p1b = timesWord# a0 b1
     p1c = plusWord# p1a p1b
