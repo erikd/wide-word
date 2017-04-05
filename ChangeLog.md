@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.0.3  -- 2017-04-05
+
+* Make it build with ghc 8.2.
+
 ## 0.1.0.2  -- 2017-02-08
 
 * Add NFData instances for Word128 and Int128.
