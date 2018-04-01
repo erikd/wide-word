@@ -47,12 +47,12 @@ test-suite test
   main-is:            test.hs
   hs-source-dirs:     test
 
-  other-modules:      Test.Data.WideWord.Int128
+  other-modules:      Test.Data.WideWord.Gen
+                    , Test.Data.WideWord.Int128
                     , Test.Data.WideWord.Word128
 
   build-depends:       base                          >= 4.8         && < 5.0
                      , bytestring                    >= 0.10
                      , ghc-prim
-                     , hspec                         >= 2.3         && < 2.6
-                     , QuickCheck                    >= 2.9
+                     , hedgehog                      == 0.5.*
                      , wide-word

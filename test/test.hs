@@ -1,26 +1,18 @@
-import Control.Monad (when)
+import           Control.Monad (unless)
 
-import Test.Data.WideWord.Int128
-import Test.Data.WideWord.Word128
+import           System.Exit (exitFailure)
 
-import Test.Hspec (Spec)
-import Test.Hspec.Runner (configQuickCheckMaxSuccess, defaultConfig, hspecWithResult, summaryFailures)
-
-import System.Exit (exitFailure, exitSuccess)
-
-
+import qualified Test.Data.WideWord.Int128
+import qualified Test.Data.WideWord.Word128
 
 main :: IO ()
-main = do
-  summary <- hspecWithResult config testAll
-  when (summaryFailures summary == 0)
-    exitSuccess
-  exitFailure
-  where
-    config = defaultConfig { configQuickCheckMaxSuccess = Just 100000 }
+main = runTests
+  [ Test.Data.WideWord.Int128.tests
+  , Test.Data.WideWord.Word128.tests
+  ]
 
-testAll :: Spec
-testAll = do
-  testWord128
-  testInt128
-
+runTests :: [IO Bool] -> IO ()
+runTests tests = do
+  result <- and <$> sequence tests
+  unless result
+    exitFailure
