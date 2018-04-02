@@ -9,7 +9,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           Data.Bifunctor (bimap)
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
-import           Data.Word (Word64)
+import           Data.Word (Word64, byteSwap64)
 import           Data.WideWord
 
 import           Foreign (allocaBytes)
@@ -38,9 +38,12 @@ prop_constructor_and_accessors =
 prop_byte_swap :: Property
 prop_byte_swap =
   propertyCount $ do
-    (h, l) <- H.forAll $ (,) <$> genWord64 <*> genWord64
-    let i128 = byteSwapInt128 $ byteSwapInt128 (Int128 h l)
-    (int128Hi64 i128, int128Lo64 i128) === (h, l)
+    h <- H.forAll genWord64
+    l <- H.forAll $ Gen.filter (/= h) genWord64
+    let w128 = Int128 h l
+        swapped = byteSwapInt128 w128
+    (byteSwapInt128 swapped, byteSwap64 (fromIntegral h), byteSwap64 (fromIntegral l))
+            === (w128, int128Lo64 swapped, int128Hi64 swapped)
 
 prop_derivied_eq_instance :: Property
 prop_derivied_eq_instance =

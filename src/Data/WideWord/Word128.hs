@@ -53,7 +53,7 @@ data Word128 = Word128
 
 
 byteSwapWord128 :: Word128 -> Word128
-byteSwapWord128 (Word128 a1 a0) = Word128 (byteSwap64 a1) (byteSwap64 a0)
+byteSwapWord128 (Word128 a1 a0) = Word128 (byteSwap64 a0) (byteSwap64 a1)
 
 
 showHexWord128 :: Word128 -> String
