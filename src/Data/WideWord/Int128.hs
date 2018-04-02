@@ -41,11 +41,12 @@ import Numeric
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
+import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, plusWord2#
+                , subWordC#, timesWord#, timesWord2#, word2Int#, xor#)
 import GHC.Enum (predError, succError)
-import GHC.Int
-import GHC.Prim
+import GHC.Int (Int64 (..))
 import GHC.Real ((%))
-import GHC.Word
+import GHC.Word (Word64 (..), byteSwap64)
 
 
 data Int128 = Int128
