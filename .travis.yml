@@ -1,16 +1,16 @@
 # language: haskell
 
 env:
- # - GHCVER=7.6.3
- # - GHCVER=7.8.4
- # - GHCVER=7.10.3
- - GHCVER=8.0.1
+ # - GHCVER=7.10.3 W
+ - GHCVER=8.0.2
+ - GHCVER=8.2.2
+ - GHCVER=8.4.1
 
 before_install:
  - sudo add-apt-repository -y ppa:hvr/ghc
  - sudo apt-get update
- - sudo apt-get install cabal-install-1.24 ghc-$GHCVER
- - export PATH=/opt/cabal/bin:/opt/ghc/$GHCVER/bin:$PATH
+ - sudo apt-get install alex-3.1.7 happy-1.19.5 cabal-install-1.24 ghc-$GHCVER
+ - export PATH=/opt/cabal/bin:/opt/ghc/$GHCVER/bin:/opt/alex/3.1.7/bin:/opt/happy/1.19.5/bin:$PATH
 
 install:
  - cabal-1.24 update
@@ -19,7 +19,7 @@ install:
 script:
  - cabal-1.24 configure --enable-tests
  - cabal-1.24 build
- - dist/build/test/test
+ - cabal-1.24 test
  - cabal-1.24 haddock
  - cabal-1.24 sdist
 
