@@ -57,7 +57,7 @@ data Int128 = Int128
 
 
 byteSwapInt128 :: Int128 -> Int128
-byteSwapInt128 (Int128 a1 a0) = Int128 (byteSwap64 a1) (byteSwap64 a0)
+byteSwapInt128 (Int128 a1 a0) = Int128 (byteSwap64 a0) (byteSwap64 a1)
 
 
 showHexInt128 :: Int128 -> String
