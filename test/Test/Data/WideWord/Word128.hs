@@ -70,6 +70,12 @@ prop_read_instance =
     (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
     read (show $ Word128 a1 a0) === Word128 a1 a0
 
+prop_read_show :: Property
+prop_read_show =
+  propertyCount $ do
+    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    H.tripping (Word128 a1 a0) show (Just . read)
+
 prop_succ :: Property
 prop_succ =
   propertyCount $ do
