@@ -54,5 +54,5 @@ test-suite test
   build-depends:       base                          >= 4.8         && < 5.0
                      , bytestring                    >= 0.10
                      , ghc-prim
-                     , hedgehog                      == 0.5.*
+                     , hedgehog                      == 0.6.*
                      , wide-word
