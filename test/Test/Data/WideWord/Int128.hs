@@ -166,8 +166,9 @@ prop_bitwise_xor =
 prop_complement :: Property
 prop_complement =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
-    toInteger128 (complement $ Int128 a1 a0) === mkInteger (complement a1) (complement a0)
+    i128 <- H.forAll genWord128
+    H.assert $ complement i128 /= i128
+    complement (complement i128) === i128
 
 prop_logical_shift_left :: Property
 prop_logical_shift_left =
