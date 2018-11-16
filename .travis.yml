@@ -1,10 +1,10 @@
 # language: haskell
 
 env:
- # - GHCVER=7.10.3 W
  - GHCVER=8.0.2
  - GHCVER=8.2.2
- - GHCVER=8.4.1
+ - GHCVER=8.4.4
+ - GHCVER=8.6.2
 
 before_install:
  - sudo add-apt-repository -y ppa:hvr/ghc

@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.0.7  -- 2018-11-16
+
+* Switch to Hedgehog for testing.
+
 ## 0.1.0.3  -- 2017-04-05
 
 * Make it build with ghc 8.2.
