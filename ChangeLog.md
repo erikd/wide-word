@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.0.8  -- 2018-12-22
+
+* Improve implementation of succ/pred.
+
 ## 0.1.0.7  -- 2018-11-16
 
 * Switch to Hedgehog for testing.

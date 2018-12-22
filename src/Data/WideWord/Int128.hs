@@ -172,19 +172,19 @@ compare128 (Int128 a1 a0) (Int128 b1 b0) =
 
 succ128 :: Int128 -> Int128
 succ128 (Int128 a1 a0)
-  | a1 == 0x7fffffffffffffff && a0 == maxBound = succError "Int128"
-  | otherwise =
-      case a0 + 1 of
-        0 -> Int128 (a1 + 1) 0
-        s -> Int128 a1 s
+  | a0 == maxBound = if a1 == 0x7fffffffffffffff
+                     then succError "Int128"
+                     else Int128 (a1 + 1) 0
+  | otherwise = Int128 a1 (a0 + 1)
+
 
 pred128 :: Int128 -> Int128
 pred128 (Int128 a1 a0)
-  | a1 == 0x8000000000000000 && a0 == 0 = predError "Int128"
-  | otherwise =
-      case a0 of
-        0 -> Int128 (a1 - 1) maxBound
-        _ -> Int128 a1 (a0 - 1)
+  | a0 == 0 = if a1 == 0x8000000000000000
+              then predError "Int128"
+              else Int128 (a1 - 1) maxBound
+  | otherwise = Int128 a1 (a0 - 1)
+
 
 {-# INLINABLE toEnum128 #-}
 toEnum128 :: Int -> Int128
@@ -395,7 +395,7 @@ toInteger128 i@(Int128 a1 a0)
         Int128 n1 n0 -> negate (fromIntegral n1 `shiftL` 64 + fromIntegral n0)
 
 -- -----------------------------------------------------------------------------
--- Functions for `Integral` instance.
+-- Functions for `Storable` instance.
 
 peek128 :: Ptr Int128 -> IO Int128
 peek128 ptr =

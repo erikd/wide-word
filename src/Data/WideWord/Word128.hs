@@ -150,7 +150,7 @@ instance NFData Word128 where
 
 {-# RULES
 "fromIntegral :: Int -> Word128"     fromIntegral = \(I# i#) -> Word128 (W64# 0##) (W64# (int2Word# i#))
-"fromIntegral :: Word- > Word128"    fromIntegral = Word128 0 . fromIntegral
+"fromIntegral :: Word -> Word128"    fromIntegral = Word128 0 . fromIntegral
 "fromIntegral :: Word32 -> Word128"  fromIntegral = Word128 0 . fromIntegral
 "fromIntegral :: Word64 -> Word128"  fromIntegral = Word128 0
 
@@ -175,19 +175,19 @@ compare128 (Word128 a1 a0) (Word128 b1 b0) =
 
 succ128 :: Word128 -> Word128
 succ128 (Word128 a1 a0)
-  | a1 == maxBound && a0 == maxBound = succError "Word128"
-  | otherwise =
-      case a0 + 1 of
-        0 -> Word128 (a1 + 1) 0
-        s -> Word128 a1 s
+  | a0 == maxBound = if a1 == maxBound
+                     then succError "Word128"
+                     else Word128 (a1 + 1) 0
+  | otherwise = Word128 a1 (a0 + 1)
+
 
 pred128 :: Word128 -> Word128
 pred128 (Word128 a1 a0)
-  | a1 == 0 && a0 == 0 = predError "Word128"
-  | otherwise =
-      case a0 of
-        0 -> Word128 (a1 - 1) maxBound
-        _ -> Word128 a1 (a0 - 1)
+  | a0 == 0 = if a1 == 0
+              then predError "Word128"
+              else Word128 (a1 - 1) maxBound
+  | otherwise = Word128 a1 (a0 - 1)
+
 
 {-# INLINABLE toEnum128 #-}
 toEnum128 :: Int -> Word128
@@ -414,7 +414,7 @@ toInteger128 :: Word128 -> Integer
 toInteger128 (Word128 a1 a0) = fromIntegral a1 `shiftL` 64 + fromIntegral a0
 
 -- -----------------------------------------------------------------------------
--- Functions for `Integral` instance.
+-- Functions for `Storable` instance.
 
 peek128 :: Ptr Word128 -> IO Word128
 peek128 ptr =
