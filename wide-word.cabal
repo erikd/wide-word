@@ -56,3 +56,17 @@ test-suite test
                      , ghc-prim
                      , hedgehog                      == 0.6.*
                      , wide-word
+
+test-suite laws
+  default-language:  Haskell2010
+  ghc-options:       -Wall
+  type:              exitcode-stdio-1.0
+
+  main-is:           laws.hs
+  hs-source-dirs:    test
+
+  build-depends:       base                          >= 4.8         && < 5.0
+                     , QuickCheck                    >= 2.9.2       && < 2.13
+                     , quickcheck-classes            >= 0.4.0       && < 0.7.0
+                     , semirings                     >= 0.2         && < 0.3
+                     , wide-word
