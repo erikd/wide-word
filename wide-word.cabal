@@ -37,7 +37,7 @@ library
 
   build-depends:       base                          >= 4.8         && < 5.0
                      , deepseq                       >= 1.3         && < 1.5
-                     , ghc-prim
+                     , primitive                     >= 0.6.4.0     && < 0.7.0.0
 
 test-suite test
   default-language:   Haskell2010

@@ -39,23 +39,23 @@ import Foreign.Storable (Storable (..))
 import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, plusWord2#
                 , quotRemWord2#, subWordC#, timesWord#, timesWord2#, xor#)
 import GHC.Enum (predError, succError)
+import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), Word32, byteSwap64)
 
 
 import Numeric (showHex)
 
+import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
 data Word128 = Word128
   { word128Hi64 :: {-# UNPACK #-} !Word64
   , word128Lo64 :: {-# UNPACK #-} !Word64
   }
-  deriving Eq
-
+  deriving (Eq)
 
 byteSwapWord128 :: Word128 -> Word128
 byteSwapWord128 (Word128 a1 a0) = Word128 (byteSwap64 a0) (byteSwap64 a1)
-
 
 showHexWord128 :: Word128 -> String
 showHexWord128 (Word128 a1 a0)
@@ -141,6 +141,28 @@ instance Storable Word128 where
 
 instance NFData Word128 where
   rnf (Word128 a1 a0) = rnf a1 `seq` rnf a0
+
+instance Prim Word128 where
+  sizeOf#         = sizeOf128#
+  alignment#      = alignment128#
+  indexByteArray# = indexByteArray128#
+  readByteArray#  = readByteArray128#
+  writeByteArray# = writeByteArray128#
+  setByteArray#   = setByteArray128#
+  indexOffAddr#   = indexOffAddr128#
+  readOffAddr#    = readOffAddr128#
+  writeOffAddr#   = writeOffAddr128#
+  setOffAddr#     = setOffAddr128#
+  {-# INLINE sizeOf# #-}
+  {-# INLINE alignment# #-}
+  {-# INLINE indexByteArray# #-}
+  {-# INLINE readByteArray# #-}
+  {-# INLINE writeByteArray# #-}
+  {-# INLINE setByteArray# #-}
+  {-# INLINE indexOffAddr# #-}
+  {-# INLINE readOffAddr# #-}
+  {-# INLINE writeOffAddr# #-}
+  {-# INLINE setOffAddr# #-}
 
 -- -----------------------------------------------------------------------------
 -- Rewrite rules.
@@ -432,6 +454,67 @@ pokeElemOff128 :: Ptr Word128 -> Int -> Word128 -> IO ()
 pokeElemOff128 ptr idx (Word128 a1 a0) = do
   pokeElemOff (castPtr ptr) (2 * idx + index0) a0
   pokeElemOff (castPtr ptr) (2 * idx + index1) a1
+
+-- -----------------------------------------------------------------------------
+-- Functions for `Prim` instance.
+
+{-# INLINE sizeOf128# #-}
+sizeOf128# :: Word128 -> Int#
+sizeOf128# _ = 2# *# sizeOf# (undefined :: Word64)
+
+{-# INLINE alignment128# #-}
+alignment128# :: Word128 -> Int#
+alignment128# _ = alignment# (undefined :: Word64)
+
+{-# INLINE indexByteArray128# #-}
+indexByteArray128# :: ByteArray# -> Int# -> Word128
+indexByteArray128# arr# i# =
+  let x = indexByteArray# arr# (2# *# i#)
+      y = indexByteArray# arr# (2# *# i# +# 1#)
+  in Word128 x y
+
+{-# INLINE readByteArray128# #-}
+readByteArray128# :: MutableByteArray# s -> Int# -> State# s -> (# State# s, Word128 #)
+readByteArray128# arr# i# =
+  \s0 -> case readByteArray# arr# (2# *# i#) s0 of
+    (# s1, x #) -> case readByteArray# arr# (2# *# i# +# 1#) s1 of
+      (# s2, y #) -> (# s2, Word128 x y #)
+
+{-# INLINE writeByteArray128# #-}
+writeByteArray128# :: MutableByteArray# s -> Int# -> Word128 -> State# s -> State# s
+writeByteArray128# arr# i# (Word128 a b) =
+  \s0 -> case writeByteArray# arr# (2# *# i#) a s0 of
+    s1 -> case writeByteArray# arr# (2# *# i# +# 1#) b s1 of
+      s2 -> s2
+
+{-# INLINE setByteArray128# #-}
+setByteArray128# :: MutableByteArray# s -> Int# -> Int# -> Word128 -> State# s -> State# s
+setByteArray128# = defaultSetByteArray#
+
+{-# INLINE indexOffAddr128# #-}
+indexOffAddr128# :: Addr# -> Int# -> Word128
+indexOffAddr128# addr# i# =
+  let x = indexOffAddr# addr# (2# *# i#)
+      y = indexOffAddr# addr# (2# *# i# +# 1#)
+  in Word128 x y
+
+{-# INLINE readOffAddr128# #-}
+readOffAddr128# :: Addr# -> Int# -> State# s -> (# State# s, Word128 #)
+readOffAddr128# addr# i# =
+  \s0 -> case readOffAddr# addr# (2# *# i#) s0 of
+    (# s1, x #) -> case readOffAddr# addr# (2# *# i# +# 1#) s1 of
+      (# s2, y #) -> (# s2, Word128 x y #)
+
+{-# INLINE writeOffAddr128# #-}
+writeOffAddr128# :: Addr# -> Int# -> Word128 -> State# s -> State# s
+writeOffAddr128# addr# i# (Word128 a b) =
+  \s0 -> case writeOffAddr# addr# (2# *# i#) a s0 of
+    s1 -> case writeOffAddr# addr# (2# *# i# +# 1#) b s1 of
+      s2 -> s2
+
+{-# INLINE setOffAddr128# #-}
+setOffAddr128# :: Addr# -> Int# -> Int# -> Word128 -> State# s -> State# s
+setOffAddr128# = defaultSetOffAddr#
 
 -- -----------------------------------------------------------------------------
 -- Constants.
