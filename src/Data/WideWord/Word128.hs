@@ -40,7 +40,8 @@ import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, pl
                 , quotRemWord2#, subWordC#, timesWord#, timesWord2#, xor#)
 import GHC.Enum (predError, succError)
 import GHC.Real ((%), divZeroError)
-import GHC.Word (Word64 (..), byteSwap64)
+import GHC.Word (Word64 (..), Word32, byteSwap64)
+
 
 import Numeric (showHex)
 
@@ -146,17 +147,15 @@ instance NFData Word128 where
 
 {-# RULES
 "fromIntegral :: Word128 -> Word128" fromIntegral = id :: Word128 -> Word128
-  #-}
 
-{-# RULES
 "fromIntegral :: Int -> Word128"     fromIntegral = \(I# i#) -> Word128 (W64# 0##) (W64# (int2Word# i#))
-"fromIntegral :: Word -> Word128"    fromIntegral = Word128 0 . fromIntegral
-"fromIntegral :: Word32 -> Word128"  fromIntegral = Word128 0 . fromIntegral
+"fromIntegral :: Word -> Word128"    fromIntegral = Word128 0 . (fromIntegral :: Word -> Word64)
+"fromIntegral :: Word32 -> Word128"  fromIntegral = Word128 0 . (fromIntegral :: Word32 -> Word64)
 "fromIntegral :: Word64 -> Word128"  fromIntegral = Word128 0
 
-"fromIntegral :: Word128 -> Int"     fromIntegral = \(Word128 _ w) -> fromIntegral w
-"fromIntegral :: Word128 -> Word"    fromIntegral = \(Word128 _ w) -> fromIntegral w
-"fromIntegral :: Word128 -> Word32"  fromIntegral = \(Word128 _ w) -> fromIntegral w
+"fromIntegral :: Word128 -> Int"     fromIntegral = \(Word128 _ w) -> fromIntegral w :: Int
+"fromIntegral :: Word128 -> Word"    fromIntegral = \(Word128 _ w) -> fromIntegral w :: Word
+"fromIntegral :: Word128 -> Word32"  fromIntegral = \(Word128 _ w) -> fromIntegral w :: Word32
 "fromIntegral :: Word128 -> Word64"  fromIntegral = \(Word128 _ w) -> w
   #-}
 
