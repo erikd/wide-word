@@ -46,7 +46,7 @@ import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, pl
 import GHC.Enum (predError, succError)
 import GHC.Int (Int64 (..))
 import GHC.Real ((%))
-import GHC.Word (Word64 (..), byteSwap64)
+import GHC.Word (Word64 (..), Word32, byteSwap64)
 
 
 data Int128 = Int128
@@ -152,6 +152,10 @@ instance NFData Int128 where
 "fromIntegral :: Int128 -> Int128" fromIntegral = id :: Int128 -> Int128
 "fromIntegral :: Word128 -> Int128" fromIntegral = \(Word128 a1 a0) -> Int128 a1 a0
 "fromIntegral :: Int128 -> Word128" fromIntegral = \(Int128 a1 a0) -> Word128 a1 a0
+
+"fromIntegral :: Word -> Int128"    fromIntegral = Int128 0 . (fromIntegral :: Word -> Word64)
+"fromIntegral :: Word32 -> Int128"  fromIntegral = Int128 0 . (fromIntegral :: Word32 -> Word64)
+"fromIntegral :: Word64 -> Int128"  fromIntegral = Int128 0
   #-}
 
 -- -----------------------------------------------------------------------------
