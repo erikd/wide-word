@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 import Data.WideWord
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Classes
