@@ -464,27 +464,27 @@ sizeOf128# _ = 2# *# sizeOf# (undefined :: Word64)
 
 {-# INLINE alignment128# #-}
 alignment128# :: Word128 -> Int#
-alignment128# _ = alignment# (undefined :: Word64)
+alignment128# _ = 2# *# alignment# (undefined :: Word64)
 
 {-# INLINE indexByteArray128# #-}
 indexByteArray128# :: ByteArray# -> Int# -> Word128
 indexByteArray128# arr# i# =
-  let x = indexByteArray# arr# (2# *# i#)
-      y = indexByteArray# arr# (2# *# i# +# 1#)
+  let x = indexByteArray# arr# (2# *# i# +# (unInt index1))
+      y = indexByteArray# arr# (2# *# i# +# (unInt index0))
   in Word128 x y
 
 {-# INLINE readByteArray128# #-}
 readByteArray128# :: MutableByteArray# s -> Int# -> State# s -> (# State# s, Word128 #)
 readByteArray128# arr# i# =
-  \s0 -> case readByteArray# arr# (2# *# i#) s0 of
-    (# s1, x #) -> case readByteArray# arr# (2# *# i# +# 1#) s1 of
+  \s0 -> case readByteArray# arr# (2# *# i# +# (unInt index1)) s0 of
+    (# s1, x #) -> case readByteArray# arr# (2# *# i# +# (unInt index0)) s1 of
       (# s2, y #) -> (# s2, Word128 x y #)
 
 {-# INLINE writeByteArray128# #-}
 writeByteArray128# :: MutableByteArray# s -> Int# -> Word128 -> State# s -> State# s
 writeByteArray128# arr# i# (Word128 a b) =
-  \s0 -> case writeByteArray# arr# (2# *# i#) a s0 of
-    s1 -> case writeByteArray# arr# (2# *# i# +# 1#) b s1 of
+  \s0 -> case writeByteArray# arr# (2# *# i# +# (unInt index1)) a s0 of
+    s1 -> case writeByteArray# arr# (2# *# i# +# (unInt index0)) b s1 of
       s2 -> s2
 
 {-# INLINE setByteArray128# #-}
@@ -494,22 +494,22 @@ setByteArray128# = defaultSetByteArray#
 {-# INLINE indexOffAddr128# #-}
 indexOffAddr128# :: Addr# -> Int# -> Word128
 indexOffAddr128# addr# i# =
-  let x = indexOffAddr# addr# (2# *# i#)
-      y = indexOffAddr# addr# (2# *# i# +# 1#)
+  let x = indexOffAddr# addr# (2# *# i# +# (unInt index1))
+      y = indexOffAddr# addr# (2# *# i# +# (unInt index0))
   in Word128 x y
 
 {-# INLINE readOffAddr128# #-}
 readOffAddr128# :: Addr# -> Int# -> State# s -> (# State# s, Word128 #)
 readOffAddr128# addr# i# =
-  \s0 -> case readOffAddr# addr# (2# *# i#) s0 of
-    (# s1, x #) -> case readOffAddr# addr# (2# *# i# +# 1#) s1 of
+  \s0 -> case readOffAddr# addr# (2# *# i# +# (unInt index1)) s0 of
+    (# s1, x #) -> case readOffAddr# addr# (2# *# i# +# (unInt index0)) s1 of
       (# s2, y #) -> (# s2, Word128 x y #)
 
 {-# INLINE writeOffAddr128# #-}
 writeOffAddr128# :: Addr# -> Int# -> Word128 -> State# s -> State# s
 writeOffAddr128# addr# i# (Word128 a b) =
-  \s0 -> case writeOffAddr# addr# (2# *# i#) a s0 of
-    s1 -> case writeOffAddr# addr# (2# *# i# +# 1#) b s1 of
+  \s0 -> case writeOffAddr# addr# (2# *# i# +# (unInt index1)) a s0 of
+    s1 -> case writeOffAddr# addr# (2# *# i# +# (unInt index0)) b s1 of
       s2 -> s2
 
 {-# INLINE setOffAddr128# #-}
@@ -524,6 +524,9 @@ zeroWord128 = Word128 0 0
 
 oneWord128 :: Word128
 oneWord128 = Word128 0 1
+
+unInt :: Int -> Int#
+unInt (I# i#) = i#
 
 -- Use these indices to get the peek/poke ordering endian correct.
 index0, index1 :: Int
