@@ -1,8 +1,11 @@
 # Revision history for wide-word
 
-## 0.1.0.8  -- 2018-12-22
+## 0.1.0.8  -- 2019-01-31
 
 * Improve implementation of succ/pred.
+* Add tests for typeclass laws.
+* Add Prim instances for Int128 and Word128.
+* Fix/re-instate rewite rules.
 
 ## 0.1.0.7  -- 2018-11-16
 
