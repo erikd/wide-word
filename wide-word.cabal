@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                wide-word
-version:             0.1.0.8
+version:             0.1.0.9
 synopsis:            Data types for large but fixed width signed and unsigned integers
 description:
   A library to provide data types for large (ie > 64 bits) but fixed width signed
@@ -55,6 +55,7 @@ test-suite test
                      , bytestring                    >= 0.10
                      , ghc-prim
                      , hedgehog                      == 0.6.*
+                     , primitive
                      , wide-word
 
 test-suite laws
@@ -68,5 +69,5 @@ test-suite laws
   build-depends:       base                          >= 4.8         && < 5.0
                      , QuickCheck                    >= 2.9.2       && < 2.13
                      , quickcheck-classes            >= 0.4.0       && < 0.7.0
-                     , semirings                     >= 0.2         && < 0.3
+                     , semirings                     >= 0.2
                      , wide-word
