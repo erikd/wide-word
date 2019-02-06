@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.0.9 -- 2019-02-06
+
+* Fix `Prim` instance for `Int128`
+
 ## 0.1.0.8  -- 2019-01-31
 
 * Improve implementation of succ/pred.

@@ -5,11 +5,14 @@ module Test.Data.WideWord.Word128
 
 import           Control.Exception (ArithException, evaluate, try)
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad (unless)
 
 import           Data.Bifunctor (bimap)
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
-import           Data.Word (Word64, byteSwap64)
+import           Data.Primitive.PrimArray
+import           Data.Primitive.Ptr
+import           Data.Word (Word8, Word64, byteSwap64)
 import           Data.WideWord
 
 import           Foreign (allocaBytes)
@@ -304,6 +307,48 @@ prop_peekElemOff_pokeElemOff =
                     pokeElemOff ptr 1 b128
                     (,) <$> peekElemOff ptr 0 <*>  peekElemOff ptr 1
     (toInteger128 ar, toInteger128 br) === (toInteger128 a128, toInteger128 b128)
+
+
+prop_ToFromPrimArray :: Property
+prop_ToFromPrimArray =
+  propertyCount $ do
+    as <- H.forAll $
+      Gen.list (fromIntegral <$> (Range.linearBounded :: Range.Range Word8)) genWord128
+    as === primArrayToList (primArrayFromList as)
+
+
+prop_WriteReadPrimArray :: Property
+prop_WriteReadPrimArray =
+  propertyCount $ do
+    as <- H.forAll $ Gen.list (Range.linear 1 256) genWord128
+    unless (null as) $ do
+      let len = length as
+          arr = primArrayFromList as
+      i <- (`mod` len) <$> H.forAll (Gen.int (Range.linear 0 (len - 1)))
+      new <- H.forAll genWord128
+      props <- liftIO $ do
+        marr <- unsafeThawPrimArray arr
+        prev <- readPrimArray marr i
+        let prevProp = prev === (as !! i)
+        writePrimArray marr i new
+        cur <- readPrimArray marr i
+        setPrimArray marr i 1 prev
+        arr' <- unsafeFreezePrimArray marr
+        return [prevProp, cur === new, arr === arr']
+      sequence_ props
+
+prop_readOffPtr_writeOffPtr :: Property
+prop_readOffPtr_writeOffPtr =
+  propertyCount $ do
+    a128 <- H.forAll genWord128
+    b128 <- H.forAll genWord128
+    (ar, br) <- liftIO $
+                  allocaBytes (2 * sizeOf zeroWord128) $ \ ptr -> do
+                    writeOffPtr ptr 0 a128
+                    writeOffPtr ptr 1 b128
+                    (,) <$> readOffPtr ptr 0 <*> readOffPtr ptr 1
+    (ar, br) === (a128, b128)
+
 
 -- -----------------------------------------------------------------------------
 

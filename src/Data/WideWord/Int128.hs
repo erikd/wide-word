@@ -429,8 +429,9 @@ peek128 ptr =
 
 peekElemOff128 :: Ptr Int128 -> Int -> IO Int128
 peekElemOff128 ptr idx =
-  Int128 <$> peekElemOff (castPtr ptr) (2 * idx + index1)
-            <*> peekElemOff (castPtr ptr) (2 * idx + index0)
+  Int128 <$> peekElemOff (castPtr ptr) (idx2 + index1)
+            <*> peekElemOff (castPtr ptr) (idx2 + index0)
+  where idx2 = 2 * idx
 
 poke128 :: Ptr Int128 -> Int128 -> IO ()
 poke128 ptr (Int128 a1 a0) =
@@ -438,8 +439,9 @@ poke128 ptr (Int128 a1 a0) =
 
 pokeElemOff128 :: Ptr Int128 -> Int -> Int128 -> IO ()
 pokeElemOff128 ptr idx (Int128 a1 a0) = do
-  pokeElemOff (castPtr ptr) (2 * idx + index0) a0
-  pokeElemOff (castPtr ptr) (2 * idx + index1) a1
+  let idx2 = 2 * idx
+  pokeElemOff (castPtr ptr) (idx2 + index0) a0
+  pokeElemOff (castPtr ptr) (idx2 + index1) a1
 
 -- -----------------------------------------------------------------------------
 -- Helpers.
@@ -470,23 +472,26 @@ alignment128# _ = 2# *# alignment# (undefined :: Word64)
 {-# INLINE indexByteArray128# #-}
 indexByteArray128# :: ByteArray# -> Int# -> Int128
 indexByteArray128# arr# i# =
-  let x = indexByteArray# arr# (2# *# (unInt index1))
-      y = indexByteArray# arr# (2# *# i# +# (unInt index0))
+  let i2# = 2# *# i#
+      x = indexByteArray# arr# (i2# +# unInt index1)
+      y = indexByteArray# arr# (i2# +# unInt index0)
   in Int128 x y
 
 {-# INLINE readByteArray128# #-}
 readByteArray128# :: MutableByteArray# s -> Int# -> State# s -> (# State# s, Int128 #)
 readByteArray128# arr# i# =
-  \s0 -> case readByteArray# arr# (2# *# (unInt index1)) s0 of
-    (# s1, x #) -> case readByteArray# arr# (2# *# i# +# (unInt index0)) s1 of
+  \s0 -> case readByteArray# arr# (i2# +# unInt index1) s0 of
+    (# s1, x #) -> case readByteArray# arr# (i2# +# unInt index0) s1 of
       (# s2, y #) -> (# s2, Int128 x y #)
+  where i2# = 2# *# i#
 
 {-# INLINE writeByteArray128# #-}
 writeByteArray128# :: MutableByteArray# s -> Int# -> Int128 -> State# s -> State# s
 writeByteArray128# arr# i# (Int128 a b) =
-  \s0 -> case writeByteArray# arr# (2# *# i# +# (unInt index1)) a s0 of
-    s1 -> case writeByteArray# arr# (2# *# i# +# (unInt index0)) b s1 of
+  \s0 -> case writeByteArray# arr# (i2# +# unInt index1) a s0 of
+    s1 -> case writeByteArray# arr# (i2# +# unInt index0) b s1 of
       s2 -> s2
+  where i2# = 2# *# i#
 
 {-# INLINE setByteArray128# #-}
 setByteArray128# :: MutableByteArray# s -> Int# -> Int# -> Int128 -> State# s -> State# s
@@ -495,23 +500,26 @@ setByteArray128# = defaultSetByteArray#
 {-# INLINE indexOffAddr128# #-}
 indexOffAddr128# :: Addr# -> Int# -> Int128
 indexOffAddr128# addr# i# =
-  let x = indexOffAddr# addr# (2# *# i# +# (unInt index1))
-      y = indexOffAddr# addr# (2# *# i# +# (unInt index0))
+  let i2# = 2# *# i#
+      x = indexOffAddr# addr# (i2# +# unInt index1)
+      y = indexOffAddr# addr# (i2# +# unInt index0)
   in Int128 x y
 
 {-# INLINE readOffAddr128# #-}
 readOffAddr128# :: Addr# -> Int# -> State# s -> (# State# s, Int128 #)
 readOffAddr128# addr# i# =
-  \s0 -> case readOffAddr# addr# (2# *# i# +# (unInt index1)) s0 of
-    (# s1, x #) -> case readOffAddr# addr# (2# *# i# +# (unInt index0)) s1 of
+  \s0 -> case readOffAddr# addr# (i2# +# unInt index1) s0 of
+    (# s1, x #) -> case readOffAddr# addr# (i2# +# unInt index0) s1 of
       (# s2, y #) -> (# s2, Int128 x y #)
+  where i2# = 2# *# i#
 
 {-# INLINE writeOffAddr128# #-}
 writeOffAddr128# :: Addr# -> Int# -> Int128 -> State# s -> State# s
 writeOffAddr128# addr# i# (Int128 a b) =
-  \s0 -> case writeOffAddr# addr# (2# *# i# +# (unInt index1)) a s0 of
-    s1 -> case writeOffAddr# addr# (2# *# i# +# (unInt index0)) b s1 of
+  \s0 -> case writeOffAddr# addr# (i2# +# unInt index1) a s0 of
+    s1 -> case writeOffAddr# addr# (i2# +# unInt index0) b s1 of
       s2 -> s2
+  where i2# = 2# *# i#
 
 {-# INLINE setOffAddr128# #-}
 setOffAddr128# :: Addr# -> Int# -> Int# -> Int128 -> State# s -> State# s
