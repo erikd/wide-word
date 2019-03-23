@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -32,6 +33,7 @@ module Data.WideWord.Word128
 import Control.DeepSeq (NFData (..))
 
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
+import Data.Data (Data, Typeable)
 
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
@@ -52,7 +54,7 @@ data Word128 = Word128
   { word128Hi64 :: {-# UNPACK #-} !Word64
   , word128Lo64 :: {-# UNPACK #-} !Word64
   }
-  deriving (Eq)
+  deriving (Eq, Data, Typeable)
 
 byteSwapWord128 :: Word128 -> Word128
 byteSwapWord128 (Word128 a1 a0) = Word128 (byteSwap64 a0) (byteSwap64 a1)
