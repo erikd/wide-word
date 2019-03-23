@@ -34,6 +34,7 @@ import Control.DeepSeq (NFData (..))
 
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 import Data.Data (Data, Typeable)
+import Data.Ix (Ix)
 
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
@@ -54,7 +55,7 @@ data Word128 = Word128
   { word128Hi64 :: {-# UNPACK #-} !Word64
   , word128Lo64 :: {-# UNPACK #-} !Word64
   }
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Ix, Typeable)
 
 byteSwapWord128 :: Word128 -> Word128
 byteSwapWord128 (Word128 a1 a0) = Word128 (byteSwap64 a0) (byteSwap64 a1)
