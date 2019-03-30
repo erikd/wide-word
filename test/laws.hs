@@ -7,6 +7,7 @@ import Data.Semiring hiding ((+),(*))
 import Data.Proxy (Proxy(Proxy))
 import Data.Bits
 import Foreign.Storable
+import Data.Primitive.Types (Prim)
 
 main :: IO ()
 main = lawsCheckMany allPropsApplied
@@ -19,17 +20,18 @@ allPropsApplied =
 
 allLaws ::
   ( Arbitrary a
+  , Bits a
   , Bounded a
   , Enum a
   , Eq a
+  , FiniteBits a
   , Integral a
   , Ord a
+  , Prim a
   , Read a
+  , Semiring a
   , Show a
   , Storable a
-  , Bits a
-  , FiniteBits a
-  , Semiring a
   ) => Proxy a -> [Laws]
 allLaws p = map ($ p)
   [ bitsLaws
@@ -39,6 +41,7 @@ allLaws p = map ($ p)
   , ordLaws
   , semiringLaws
   , storableLaws
+  , primLaws
   ]
 
 instance Arbitrary Word128 where
