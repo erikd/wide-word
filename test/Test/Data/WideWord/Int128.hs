@@ -3,11 +3,11 @@ module Test.Data.WideWord.Int128
   ( tests
   ) where
 
-import           Control.Exception (ArithException, evaluate, try)
+import           Control.Exception (SomeException, evaluate, try)
 import           Control.Monad (unless)
 import           Control.Monad.IO.Class (liftIO)
 
-import           Data.Bifunctor (bimap)
+import           Data.Bifunctor (first)
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
 import           Data.Primitive.PrimArray
@@ -77,21 +77,26 @@ prop_succ :: Property
 prop_succ =
   propertyCount $ do
     i128 <- H.forAll genInt128
-    res <- liftIO . try $ evaluate (succ i128)
-    bimap showArithException toInteger128 res
-        === if i128 == maxBound
+    res <- liftIO (fmap toInteger128 <$> tryEvaluate (succ i128))
+    res === if i128 == maxBound
               then Left "Enum.succ{Int128}: tried to take `succ' of maxBound"
-              else Right $ succ (toInteger128 i128)
+              else Right (succ $ toInteger128 i128)
 
 prop_pred :: Property
 prop_pred =
   propertyCount $ do
     i128 <- H.forAll genInt128
-    res <- liftIO . try $ evaluate (pred i128)
-    bimap showArithException toInteger128 res
-        === if i128 == 0
+    res <- liftIO (fmap toInteger128 <$> tryEvaluate (pred i128))
+    res === if i128 == minBound
               then Left "Enum.pred{Int128}: tried to take `pred' of minBound"
               else Right $ pred (toInteger128 i128)
+
+tryEvaluate :: a -> IO (Either String a)
+tryEvaluate x = do
+  first renderException <$> try (evaluate x)
+  where
+    renderException :: SomeException -> String
+    renderException = show
 
 prop_toEnum_fromEnum :: Property
 prop_toEnum_fromEnum =
@@ -345,9 +350,6 @@ correctInt128 x
 
 toInteger128 :: Int128 -> Integer
 toInteger128 = toInteger
-
-showArithException :: ArithException -> String
-showArithException = show
 
 -- -----------------------------------------------------------------------------
 
