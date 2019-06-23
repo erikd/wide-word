@@ -34,15 +34,15 @@ propertyCount =
 prop_constructor_and_accessors :: Property
 prop_constructor_and_accessors =
   propertyCount $ do
-    (h, l) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (h, l) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     let i128 = Int128 h l
     (int128Hi64 i128, int128Lo64 i128) === (h, l)
 
 prop_byte_swap :: Property
 prop_byte_swap =
   propertyCount $ do
-    h <- H.forAll genWord64
-    l <- H.forAll $ Gen.filter (/= h) genWord64
+    h <- H.forAll genBiasedWord64
+    l <- H.forAll $ Gen.filter (/= h) genBiasedWord64
     let w128 = Int128 h l
         swapped = byteSwapInt128 w128
     (byteSwapInt128 swapped, byteSwap64 (fromIntegral h), byteSwap64 (fromIntegral l))
@@ -51,8 +51,8 @@ prop_byte_swap =
 prop_derivied_eq_instance :: Property
 prop_derivied_eq_instance =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
-    (b1, b0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (a1, a0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
+    (b1, b0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     (Int128 a1 a0 == Int128 b1 b0) === (a1 == b1 && a0 == b0)
 
 prop_ord_instance :: Property
@@ -70,7 +70,7 @@ prop_show_instance =
 prop_read_instance :: Property
 prop_read_instance =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (a1, a0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     read (show $ Int128 a1 a0) === Int128 a1 a0
 
 prop_succ :: Property
@@ -149,7 +149,7 @@ prop_signum =
 prop_fromInteger :: Property
 prop_fromInteger =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (a1, a0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     let i128 = fromInteger $ mkInteger a1 a0
     (int128Hi64 i128, int128Lo64 i128) === (a1, a0)
 
@@ -195,14 +195,14 @@ prop_logical_shift_right =
 prop_logical_rotate_left :: Property
 prop_logical_rotate_left =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (a1, a0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     rot <- H.forAll $ Gen.int (Range.linearFrom 0 (-20000) 20000)
     toInteger (rotateL (Int128 a1 a0) rot) === correctInt128 (toInteger $ rotateL (Word128 a1 a0) rot)
 
 prop_logical_rotate_right :: Property
 prop_logical_rotate_right =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (a1, a0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     rot <- H.forAll $ Gen.int (Range.linearFrom 0 (-20000) 20000)
     toInteger (rotateR (Int128 a1 a0) rot) === correctInt128 (toInteger $ rotateR (Word128 a1 a0) rot)
 
@@ -232,13 +232,13 @@ prop_bit =
 prop_popCount :: Property
 prop_popCount =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (a1, a0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     popCount (Int128 a1 a0) === popCount a1 + popCount a0
 
 prop_countLeadingZeros :: Property
 prop_countLeadingZeros =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (a1, a0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     let expected = if a1 == 0
                     then 64 + countLeadingZeros a0
                     else countLeadingZeros a1
@@ -247,7 +247,7 @@ prop_countLeadingZeros =
 prop_countTrailingZeros :: Property
 prop_countTrailingZeros =
   propertyCount $ do
-    (a1, a0) <- H.forAll $ (,) <$> genWord64 <*> genWord64
+    (a1, a0) <- H.forAll $ (,) <$> genBiasedWord64 <*> genBiasedWord64
     let expected = if a0 == 0
                     then 64 + countTrailingZeros a1
                     else countTrailingZeros a0
