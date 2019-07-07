@@ -382,48 +382,51 @@ quotRem128 num@(Word128 n1 n0) den@(Word128 d1 d0)
   | n1 == 0 && d1 == 0 = quotRemTwo n0 d0
   | n1 < d1 = (zeroWord128, num)
   | d1 == 0 = quotRemThree num d0
+  | n1 == d1 =
+      case compare n0 d0 of
+        LT -> (zeroWord128, num)
+        EQ -> (oneWord128, zeroWord128)
+        GT -> (Word128 0 1, Word128 0 (n0 - d0))
   | otherwise = quotRemFour num den
 
-
+{-# INLINE quotRemFour #-}
 quotRemFour :: Word128 -> Word128 -> (Word128, Word128)
-quotRemFour num@(Word128 n1 _) den@(Word128 d1 d0)
-  | n1 == d1 = quotRemFourX num d0
-  | otherwise = (q, r)
-      where
-        qtest = quot n1 d1
-        diff = times128 den (Word128 0 qtest)
-        (q, r) = case compare128 num diff of
-                    EQ -> (Word128 0 qtest, zeroWord128)
-                    GT -> (Word128 0 qtest, minus128 num diff)
-                    LT -> let qx = Word128 0 (qtest - 1)
-                              diffx = times128 den qx
-                          in (qx, minus128 num diffx)
+quotRemFour num@(Word128 n1 _) den@(Word128 d1 _)
+  | remain < den = (Word128 0 qest, remain)
+    -- The above is correct in most cases, but for the case where is not
+    -- we have the following. While the following is correct, it is rather
+    -- suboptimal. Would be nice to find something better.
+  | otherwise =
+      mapPair fromInteger128 $ quotRem (toInteger num) (toInteger den)
+  where
+    qest = quot n1 d1
+    prod = halfTimes128 den qest
+    remain = minus128 num prod
 
-
-{-# INLINE quotRemFourX #-}
-quotRemFourX :: Word128 -> Word64 -> (Word128, Word128)
-quotRemFourX num@(Word128 _ n0) d0 =
-  case compare n0 d0 of
-    LT -> (zeroWord128, num)
-    EQ -> (oneWord128, zeroWord128)
-    GT -> (Word128 0 1, Word128 0 (n0 - d0))
-
+{-# INLINE halfTimes128 #-}
+halfTimes128 :: Word128 -> Word64 -> Word128
+halfTimes128 (Word128 (W64# a1) (W64# a0)) (W64# b0) =
+  Word128 (W64# p1) (W64# p0)
+  where
+    !(# c1, p0 #) = timesWord2# a0 b0
+    p1a = timesWord# a1 b0
+    p1 = plusWord# p1a c1
 
 {-# INLINE quotRemThree #-}
 quotRemThree :: Word128 -> Word64 -> (Word128, Word128)
 quotRemThree num@(Word128 n1 n0) den
   | den == 0 = divZeroError
   | den == 1 = (num, zeroWord128)
-  | n1 < den = case quotRemWord2 n1 n0 den of
+  | n1 < den = case quotRemWord64 n1 n0 den of
                 (q, r) -> (Word128 0 q, Word128 0 r)
   | otherwise =
       case quotRem n1 den of
-        (q1, r1) -> case quotRemWord2 r1 n0 den of
+        (q1, r1) -> case quotRemWord64 r1 n0 den of
                       (q0, r0) -> (Word128 q1 q0, Word128 0 r0)
 
-{-# INLINE quotRemWord2 #-}
-quotRemWord2 :: Word64 -> Word64 -> Word64 -> (Word64, Word64)
-quotRemWord2 (W64# n1) (W64# n0) (W64# d) =
+{-# INLINE quotRemWord64 #-}
+quotRemWord64 :: Word64 -> Word64 -> Word64 -> (Word64, Word64)
+quotRemWord64 (W64# n1) (W64# n0) (W64# d) =
   case quotRemWord2# n1 n0 d of
     (# q, r #) -> (W64# q, W64# r)
 
@@ -434,6 +437,7 @@ quotRemTwo n0 d0 =
   case quotRem n0 d0 of
     (q, r) -> (Word128 0 q, Word128 0 r)
 
+{-# INLINE toInteger128 #-}
 toInteger128 :: Word128 -> Integer
 toInteger128 (Word128 a1 a0) = fromIntegral a1 `shiftL` 64 + fromIntegral a0
 
@@ -526,6 +530,9 @@ writeOffAddr128# addr# i# (Word128 a b) =
 {-# INLINE setOffAddr128# #-}
 setOffAddr128# :: Addr# -> Int# -> Int# -> Word128 -> State# s -> State# s
 setOffAddr128# = defaultSetOffAddr#
+
+mapPair :: (a -> b) -> (a, a) -> (b, b)
+mapPair f (a, b) = (f a, f b)
 
 -- -----------------------------------------------------------------------------
 -- Constants.
