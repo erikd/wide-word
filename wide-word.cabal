@@ -33,6 +33,7 @@ library
 
   exposed-modules:     Data.WideWord
                        Data.WideWord.Word128
+                       Data.WideWord.Word256
                        Data.WideWord.Int128
 
   build-depends:       base                          >= 4.8         && < 4.14
@@ -66,9 +67,9 @@ test-suite laws
   main-is:           laws.hs
   hs-source-dirs:    test
 
-  build-depends:       base
+  build-depends:       base                          >= 4.8         && < 5.0
                      , QuickCheck                    >= 2.9.2       && < 2.14
-                     , quickcheck-classes            >= 0.4.0       && < 0.7
+                     , quickcheck-classes            >= 0.6.3       && < 0.7.0
                      , primitive
                      , semirings                     >= 0.2         && < 0.6
                      , wide-word
