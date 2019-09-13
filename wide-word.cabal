@@ -68,7 +68,7 @@ test-suite laws
 
   build-depends:       base                          >= 4.8         && < 5.0
                      , QuickCheck                    >= 2.9.2       && < 2.13
-                     , quickcheck-classes            >= 0.4.0       && < 0.7.0
+                     , quickcheck-classes            >= 0.4.0       && < 0.6.3
                      , primitive
                      , semirings                     >= 0.2         && < 0.6
                      , wide-word
