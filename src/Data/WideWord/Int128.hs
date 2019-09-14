@@ -389,28 +389,28 @@ countTrailingZeros128 (Int128 a1 a0) =
 
 quotRem128 :: Int128 -> Int128 -> (Int128, Int128)
 quotRem128 numer denom
-  | numerIsNegative && denomIsNegative = (word128ToInt128 wq, word128ToInt128 (negate wr))
-  | numerIsNegative = (word128ToInt128 (negate wq), word128ToInt128 (negate wr))
-  | denomIsNegative = (word128ToInt128 (negate wq), word128ToInt128 wr)
+  | isNeg numer && isNeg denom = (word128ToInt128 wq, word128ToInt128 (negate wr))
+  | isNeg numer = (word128ToInt128 (negate wq), word128ToInt128 (negate wr))
+  | isNeg denom = (word128ToInt128 (negate wq), word128ToInt128 wr)
   | otherwise = (word128ToInt128 wq, word128ToInt128 wr)
   where
     (wq, wr) = quotRem absNumerW absDenomW
     absNumerW = int128ToWord128 $ abs128 numer
     absDenomW = int128ToWord128 $ abs128 denom
-    numerIsNegative = topBitSetWord64 $ int128Hi64 numer
-    denomIsNegative = topBitSetWord64 $ int128Hi64 denom
+    isNeg = topBitSetWord64 . int128Hi64
 
 
 divMod128 :: Int128 -> Int128 -> (Int128, Int128)
 divMod128 numer denom
-  | numerIsNegative && denomIsNegative = (word128ToInt128 wq, word128ToInt128 (negate wr))
-  | numerIsNegative = (word128ToInt128 (negate $ wq + 1), word128ToInt128 (absDenomW - wr))
-  | denomIsNegative = (word128ToInt128 (negate $ wq + 1), word128ToInt128 (negate $ absDenomW - wr))
+  | isNeg numer && isNeg denom = (word128ToInt128 wq, word128ToInt128 (negate wr))
+  | isNeg numer && wr == 0 = (word128ToInt128 (negate wq), 0)
+  | isNeg numer = (word128ToInt128 (negate $ wq + 1), word128ToInt128 (absDenomW - wr))
+  | isNeg denom && wr == 0 = (word128ToInt128 (negate wq), 0)
+  | isNeg denom = (word128ToInt128 (negate $ wq + 1), word128ToInt128 (negate $ absDenomW - wr))
   | otherwise = (word128ToInt128 wq, word128ToInt128 wr)
   where
     (wq, wr) = quotRem absNumerW absDenomW
-    numerIsNegative = topBitSetWord64 $ int128Hi64 numer
-    denomIsNegative = topBitSetWord64 $ int128Hi64 denom
+    isNeg = topBitSetWord64 . int128Hi64
     absNumerW = int128ToWord128 $ abs128 numer
     absDenomW = int128ToWord128 $ abs128 denom
 
