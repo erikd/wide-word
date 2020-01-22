@@ -143,7 +143,7 @@ instance Storable Word128 where
   pokeElemOff = pokeElemOff128
 
 instance NFData Word128 where
-  rnf (Word128 a1 a0) = rnf a1 `seq` rnf a0
+  rnf !_ = ()
 
 instance Prim Word128 where
   sizeOf#         = sizeOf128#
