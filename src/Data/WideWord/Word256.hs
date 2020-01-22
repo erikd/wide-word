@@ -151,8 +151,7 @@ instance Storable Word256 where
   pokeElemOff = pokeElemOff256
 
 instance NFData Word256 where
-  rnf (Word256 a3 a2 a1 a0) =
-    rnf a3 `seq` rnf a2 `seq` rnf a1 `seq` rnf a0
+  rnf !_ = ()
 
 instance Prim Word256 where
   sizeOf#         = sizeOf256#
