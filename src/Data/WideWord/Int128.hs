@@ -146,7 +146,8 @@ instance Storable Int128 where
   pokeElemOff = pokeElemOff128
 
 instance NFData Int128 where
-  rnf (Int128 a1 a0) = rnf a1 `seq` rnf a0
+  -- The fields are already strict and unpacked, so do nothing.
+  rnf !_ = ()
 
 instance Prim Int128 where
   sizeOf#         = sizeOf128#
