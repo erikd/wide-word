@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.1.0 -- 2019-11-22
+
+* Add `Word256`.
+
 ## 0.1.0.9 -- 2019-02-06
 
 * Fix `Prim` instance for `Int128`

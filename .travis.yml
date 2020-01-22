@@ -4,8 +4,8 @@ env:
  - GHCVER=8.0.2
  - GHCVER=8.2.2
  - GHCVER=8.4.4
- - GHCVER=8.6.3
- - GHCVER=8.8.1
+ - GHCVER=8.6.5
+ - GHCVER=8.8.2
 
 before_install:
  - sudo add-apt-repository -y ppa:hvr/ghc
@@ -19,7 +19,7 @@ install:
 script:
  - cabal-3.0 configure --enable-tests
  - cabal-3.0 build
- - cabal-3.0 test --test-show-details=streaming
+ - cabal-3.0 test --test-show-details=direct -j1
  - cabal-3.0 haddock
  - cabal-3.0 sdist
 
