@@ -36,6 +36,9 @@ import Control.DeepSeq (NFData (..))
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 import Data.Data (Data, Typeable)
 import Data.Ix (Ix)
+#if ! MIN_VERSION_base(4,11,0)
+import Data.Semigroup ((<>))
+#endif
 
 import Data.WideWord.Word128
 
@@ -189,10 +192,7 @@ instance Prim Int128 where
 
 compare128 :: Int128 -> Int128 -> Ordering
 compare128 (Int128 a1 a0) (Int128 b1 b0) =
-  case compare (int64OfWord64 a1) (int64OfWord64 b1) of
-    EQ -> compare a0 b0
-    LT -> LT
-    GT -> GT
+  compare (int64OfWord64 a1) (int64OfWord64 b1) <> compare a0 b0
   where
     int64OfWord64 (W64# w) = I64# (word2Int# w)
 
