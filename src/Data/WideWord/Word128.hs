@@ -188,11 +188,7 @@ instance Prim Word128 where
 -- Functions for `Ord` instance.
 
 compare128 :: Word128 -> Word128 -> Ordering
-compare128 (Word128 a1 a0) (Word128 b1 b0) =
-  case compare a1 b1 of
-    EQ -> compare a0 b0
-    LT -> LT
-    GT -> GT
+compare128 (Word128 a1 a0) (Word128 b1 b0) = compare a1 b1 <> compare a0 b0
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.
