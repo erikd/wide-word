@@ -35,6 +35,9 @@ import Control.DeepSeq (NFData (..))
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 import Data.Data (Data, Typeable)
 import Data.Ix (Ix)
+#if ! MIN_VERSION_base(4,11,0)
+import Data.Semigroup ((<>))
+#endif
 
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
@@ -190,10 +193,7 @@ instance Prim Word128 where
 
 compare128 :: Word128 -> Word128 -> Ordering
 compare128 (Word128 a1 a0) (Word128 b1 b0) =
-  case compare a1 b1 of
-    EQ -> compare a0 b0
-    LT -> LT
-    GT -> GT
+  compare a1 b1 <> compare a0 b0
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.

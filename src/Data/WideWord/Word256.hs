@@ -34,6 +34,9 @@ import Control.DeepSeq (NFData (..))
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 import Data.Data (Data, Typeable)
 import Data.Ix (Ix)
+#if ! MIN_VERSION_base(4,11,0)
+import Data.Semigroup ((<>))
+#endif
 
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
@@ -198,16 +201,7 @@ instance Prim Word256 where
 
 compare256 :: Word256 -> Word256 -> Ordering
 compare256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
-  case compare a3 b3 of
-    LT -> LT
-    GT -> GT
-    EQ -> case compare a2 b2 of
-      LT -> LT
-      GT -> GT
-      EQ -> case compare a1 b1 of
-        LT -> LT
-        GT -> GT
-        EQ -> compare a0 b0
+  compare a3 b3 <> compare a2 b2 <> compare a1 b1 <> compare a0 b0
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.
