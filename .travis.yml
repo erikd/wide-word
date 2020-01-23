@@ -19,7 +19,7 @@ install:
 script:
  - cabal-3.0 configure --enable-tests
  - cabal-3.0 build
- - cabal-3.0 test --test-show-details=direct -j1
+ - cabal-3.0 test --test-show-details=streaming -j1
  - cabal-3.0 haddock
  - cabal-3.0 sdist
 
