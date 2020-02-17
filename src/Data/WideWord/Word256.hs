@@ -185,7 +185,7 @@ instance Prim Word256 where
 {-# RULES
 "fromIntegral :: Word256 -> Word256" fromIntegral = id :: Word256 -> Word256
 
-"fromIntegral :: Int -> Word256"     fromIntegral = \(I# i#) -> Word256 (W64# 0##) (W64# 0##) (W64# 0##) (W64# (int2Word# i#))
+"fromIntegral :: Int -> Word256"     fromIntegral = Word256 0 0 0 . (fromIntegral :: Int -> Word64)
 "fromIntegral :: Word -> Word256"    fromIntegral = Word256 0 0 0 . (fromIntegral :: Word -> Word64)
 "fromIntegral :: Word32 -> Word256"  fromIntegral = Word256 0 0 0 . (fromIntegral :: Word32 -> Word64)
 "fromIntegral :: Word64 -> Word256"  fromIntegral = Word256 0 0 0
