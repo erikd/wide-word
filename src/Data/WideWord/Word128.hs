@@ -177,7 +177,7 @@ instance Prim Word128 where
 {-# RULES
 "fromIntegral :: Word128 -> Word128" fromIntegral = id :: Word128 -> Word128
 
-"fromIntegral :: Int -> Word128"     fromIntegral = \(I# i#) -> Word128 (W64# 0##) (W64# (int2Word# i#))
+"fromIntegral :: Int -> Word128"     fromIntegral = Word128 0 . (fromIntegral :: Int -> Word64)
 "fromIntegral :: Word -> Word128"    fromIntegral = Word128 0 . (fromIntegral :: Word -> Word64)
 "fromIntegral :: Word32 -> Word128"  fromIntegral = Word128 0 . (fromIntegral :: Word32 -> Word64)
 "fromIntegral :: Word64 -> Word128"  fromIntegral = Word128 0
