@@ -48,7 +48,9 @@ import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), Word32, byteSwap64)
-
+#if WORD_SIZE_IN_BITS < 64
+import GHC.IntWord64
+#endif
 
 import Numeric (showHex)
 
@@ -177,7 +179,11 @@ instance Prim Word128 where
 {-# RULES
 "fromIntegral :: Word128 -> Word128" fromIntegral = id :: Word128 -> Word128
 
+#if WORD_SIZE_IN_BITS < 64
+"fromIntegral :: Int -> Word128"     fromIntegral = \(I# i#) -> Word128 (W64# (wordToWord64# 0##)) (W64# (wordToWord64# (int2Word# i#)))
+#else 
 "fromIntegral :: Int -> Word128"     fromIntegral = \(I# i#) -> Word128 (W64# 0##) (W64# (int2Word# i#))
+#endif 
 "fromIntegral :: Word -> Word128"    fromIntegral = Word128 0 . (fromIntegral :: Word -> Word64)
 "fromIntegral :: Word32 -> Word128"  fromIntegral = Word128 0 . (fromIntegral :: Word32 -> Word64)
 "fromIntegral :: Word64 -> Word128"  fromIntegral = Word128 0
@@ -228,23 +234,49 @@ fromEnum128 (Word128 _ a0) = fromEnum a0
 {-# INLINABLE plus128 #-}
 plus128 :: Word128 -> Word128 -> Word128
 plus128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+#if WORD_SIZE_IN_BITS < 64
+  Word128 (W64# (wordToWord64# s1)) (W64# (wordToWord64# s0))
+  where
+    !(# c1, s0 #) = plusWord2# (word64ToWord# a0) (word64ToWord# b0)
+    s1a = plusWord# (word64ToWord# a1) (word64ToWord# b1)
+    s1 = plusWord# c1 s1a
+#else
   Word128 (W64# s1) (W64# s0)
   where
     !(# c1, s0 #) = plusWord2# a0 b0
     s1a = plusWord# a1 b1
     s1 = plusWord# c1 s1a
+#endif
+
 
 {-# INLINABLE minus128 #-}
 minus128 :: Word128 -> Word128 -> Word128
 minus128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+#if WORD_SIZE_IN_BITS < 64
+  Word128 (W64# (wordToWord64# d1)) (W64# (wordToWord64# d0))
+  where
+    !(# d0, c1 #) = subWordC# (word64ToWord# a0) (word64ToWord# b0)
+    a1c = minusWord# (word64ToWord# a1) (int2Word# c1)
+    d1 = minusWord# a1c (word64ToWord# b1)
+#else
   Word128 (W64# d1) (W64# d0)
   where
     !(# d0, c1 #) = subWordC# a0 b0
     a1c = minusWord# a1 (int2Word# c1)
     d1 = minusWord# a1c b1
+#endif
 
 times128 :: Word128 -> Word128 -> Word128
 times128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+#if WORD_SIZE_IN_BITS < 64
+  Word128 (W64# (wordToWord64# p1)) (W64# (wordToWord64# p0))
+  where
+    !(# c1, p0 #) = timesWord2# (word64ToWord# a0) (word64ToWord# b0)
+    p1a = timesWord# (word64ToWord# a1) (word64ToWord# b0)
+    p1b = timesWord# (word64ToWord# a0) (word64ToWord# b1)
+    p1c = plusWord# p1a p1b
+    p1 = plusWord# p1c c1
+#else
   Word128 (W64# p1) (W64# p0)
   where
     !(# c1, p0 #) = timesWord2# a0 b0
@@ -252,17 +284,29 @@ times128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
     p1b = timesWord# a0 b1
     p1c = plusWord# p1a p1b
     p1 = plusWord# p1c c1
+#endif
 
 {-# INLINABLE negate128 #-}
 negate128 :: Word128 -> Word128
 negate128 (Word128 (W64# a1) (W64# a0)) =
+#if WORD_SIZE_IN_BITS < 64
+  case plusWord2# (not# (word64ToWord# a0)) 1## of
+    (# c, s #) -> Word128 (W64# (wordToWord64# (plusWord# (not# (word64ToWord# a1)) c))) (W64# (wordToWord64# s))
+#else 
   case plusWord2# (not# a0) 1## of
     (# c, s #) -> Word128 (W64# (plusWord# (not# a1) c)) (W64# s)
+#endif 
 
 {-# INLINABLE signum128 #-}
 signum128 :: Word128 -> Word128
+#if WORD_SIZE_IN_BITS < 64
+signum128 (Word128 (W64# a) (W64# b)) 
+  | 0## <- word64ToWord# a, 0## <- word64ToWord# b = zeroWord128
+  | otherwise = oneWord128
+#else 
 signum128 (Word128 (W64# 0##) (W64# 0##)) = zeroWord128
 signum128 _ = oneWord128
+#endif
 
 fromInteger128 :: Integer -> Word128
 fromInteger128 i =
@@ -274,17 +318,29 @@ fromInteger128 i =
 {-# INLINABLE and128 #-}
 and128 :: Word128 -> Word128 -> Word128
 and128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+#if WORD_SIZE_IN_BITS < 64
+  Word128 (W64# (wordToWord64# (and# (word64ToWord# a1) (word64ToWord# b1)))) (W64# (wordToWord64# (and# (word64ToWord# a0) (word64ToWord# b0))))
+#else
   Word128 (W64# (and# a1 b1)) (W64# (and# a0 b0))
+#endif 
 
 {-# INLINABLE or128 #-}
 or128 :: Word128 -> Word128 -> Word128
 or128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+#if WORD_SIZE_IN_BITS < 64
+  Word128 (W64# (wordToWord64# (or# (word64ToWord# a1) (word64ToWord# b1)))) (W64# (wordToWord64# (or# (word64ToWord# a0) (word64ToWord# b0))))
+#else 
   Word128 (W64# (or# a1 b1)) (W64# (or# a0 b0))
+#endif 
 
 {-# INLINABLE xor128 #-}
 xor128 :: Word128 -> Word128 -> Word128
 xor128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
+#if WORD_SIZE_IN_BITS < 64
+  Word128 (W64# (wordToWord64# (xor# (word64ToWord# a1) (word64ToWord# b1)))) (W64# (wordToWord64# (xor# (word64ToWord# a0) (word64ToWord# b0))))
+#else
   Word128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+#endif 
 
 {-# INLINABLE complement128 #-}
 complement128 :: Word128 -> Word128
@@ -407,11 +463,20 @@ quotRemFour num@(Word128 n1 _) den@(Word128 d1 _)
 {-# INLINE halfTimes128 #-}
 halfTimes128 :: Word128 -> Word64 -> Word128
 halfTimes128 (Word128 (W64# a1) (W64# a0)) (W64# b0) =
+#if WORD_SIZE_IN_BITS < 64
+  Word128 (W64# (wordToWord64# p1)) (W64# (wordToWord64# p0))
+  where
+    !(# c1, p0 #) = timesWord2# (word64ToWord# a0) (word64ToWord# b0)
+    p1a = timesWord# (word64ToWord# a1) (word64ToWord# b0)
+    p1 = plusWord# p1a c1
+#else 
   Word128 (W64# p1) (W64# p0)
   where
     !(# c1, p0 #) = timesWord2# a0 b0
     p1a = timesWord# a1 b0
     p1 = plusWord# p1a c1
+#endif 
+
 
 {-# INLINE quotRemThree #-}
 quotRemThree :: Word128 -> Word64 -> (Word128, Word128)
@@ -428,9 +493,13 @@ quotRemThree num@(Word128 n1 n0) den
 {-# INLINE quotRemWord64 #-}
 quotRemWord64 :: Word64 -> Word64 -> Word64 -> (Word64, Word64)
 quotRemWord64 (W64# n1) (W64# n0) (W64# d) =
+#if WORD_SIZE_IN_BITS < 64
+  case quotRemWord2# (word64ToWord# n1) (word64ToWord# n0) (word64ToWord# d) of
+    (# q, r #) -> (W64# (wordToWord64# q), W64# (wordToWord64# r))
+#else 
   case quotRemWord2# n1 n0 d of
     (# q, r #) -> (W64# q, W64# r)
-
+#endif 
 
 {-# INLINE quotRemTwo #-}
 quotRemTwo :: Word64 -> Word64 -> (Word128, Word128)
