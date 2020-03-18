@@ -54,10 +54,10 @@ import Numeric (showHex)
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
 data Word256 = Word256
-  { word256hi :: {-# UNPACK #-} !Word64
-  , word256m1 :: {-# UNPACK #-} !Word64
-  , word256m0 :: {-# UNPACK #-} !Word64
-  , word256lo :: {-# UNPACK #-} !Word64
+  { word256hi :: !Word64
+  , word256m1 :: !Word64
+  , word256m0 :: !Word64
+  , word256lo :: !Word64
   }
   deriving (Eq, Data, Ix, Typeable)
 
