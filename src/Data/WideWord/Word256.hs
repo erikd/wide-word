@@ -541,7 +541,7 @@ sizeOf256# _ = 4# *# sizeOf# (undefined :: Word64)
 
 {-# INLINE alignment256# #-}
 alignment256# :: Word256 -> Int#
-alignment256# _ = alignment# (undefined :: Word64)
+alignment256# _ = 4# *# alignment# (undefined :: Word64)
 
 {-# INLINE indexByteArray256# #-}
 indexByteArray256# :: ByteArray# -> Int# -> Word256
