@@ -55,10 +55,14 @@ allLaws p = map ($ p)
   ]
 
 instance Arbitrary Word128 where
-  arbitrary = Word128 <$> arbitrary <*> arbitrary
+  arbitrary =
+    Word128 <$> arbitraryBoundedIntegral <*> arbitraryBoundedIntegral
 
 instance Arbitrary Word256 where
-  arbitrary = Word256 <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
+  arbitrary =
+    Word256
+      <$> arbitraryBoundedIntegral <*> arbitraryBoundedIntegral
+      <*> arbitraryBoundedIntegral <*> arbitraryBoundedIntegral
   shrink x
     | x == 0 = []
     | x == 1 = [0]
