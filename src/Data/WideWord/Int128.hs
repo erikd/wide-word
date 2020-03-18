@@ -58,8 +58,8 @@ import GHC.Word (Word64 (..), Word32, byteSwap64)
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
 data Int128 = Int128
-  { int128Hi64 :: {-# UNPACK #-} !Word64
-  , int128Lo64 :: {-# UNPACK #-} !Word64
+  { int128Hi64 :: !Word64
+  , int128Lo64 :: !Word64
   }
   deriving (Eq, Data, Ix, Typeable)
 
