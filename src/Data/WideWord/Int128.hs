@@ -141,8 +141,8 @@ instance Integral Int128 where
   toInteger = toInteger128
 
 instance Storable Int128 where
-  sizeOf _ = 2 * sizeOf (0 :: Word64)
-  alignment _ = 2 * alignment (0 :: Word64)
+  sizeOf i = I# (sizeOf128# i)
+  alignment i = I# (alignment128# i)
   peek = peek128
   peekElemOff = peekElemOff128
   poke = poke128
