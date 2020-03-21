@@ -1,5 +1,10 @@
 # Revision history for wide-word
 
+## 0.1.1.1 -- 2020-03-22
+
+* Make `sizeOf` and `alignment` methods of `Word256` `Prim` and `Storable`
+  instances agree.
+
 ## 0.1.1.0 -- 2019-11-22
 
 * Add `Word256`.
