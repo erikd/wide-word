@@ -41,7 +41,7 @@ import Data.Semigroup ((<>))
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
-import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, plusWord2#
+import GHC.Base (Int (..), and#, minusWord#, not#, or#, plusWord#, plusWord2#
                 , subWordC#, timesWord#, timesWord2#, xor#)
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
@@ -146,8 +146,8 @@ instance Integral Word256 where
   toInteger = toInteger256
 
 instance Storable Word256 where
-  sizeOf _ = 4 * sizeOf (0 :: Word64)
-  alignment _ = 4 * alignment (0 :: Word64)
+  sizeOf w = I# (sizeOf256# w)
+  alignment w = I# (alignment256# w)
   peek = peek256
   peekElemOff = peekElemOff256
   poke = poke256
@@ -537,11 +537,11 @@ pokeElemOff256 ptr idx (Word256 a3 a2 a1 a0) = do
 
 {-# INLINE sizeOf256# #-}
 sizeOf256# :: Word256 -> Int#
-sizeOf256# _ = 4# *# sizeOf# (undefined :: Word64)
+sizeOf256# _ = 4# *# sizeOf# (0 :: Word64)
 
 {-# INLINE alignment256# #-}
 alignment256# :: Word256 -> Int#
-alignment256# _ = alignment# (undefined :: Word64)
+alignment256# _ = 4# *# alignment# (0 :: Word64)
 
 {-# INLINE indexByteArray256# #-}
 indexByteArray256# :: ByteArray# -> Int# -> Word256

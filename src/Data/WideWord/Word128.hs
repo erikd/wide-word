@@ -138,8 +138,8 @@ instance Integral Word128 where
   toInteger = toInteger128
 
 instance Storable Word128 where
-  sizeOf _ = 2 * sizeOf (0 :: Word64)
-  alignment _ = 2 * alignment (0 :: Word64)
+  sizeOf w = I# (sizeOf128# w)
+  alignment w = I# (alignment128# w)
   peek = peek128
   peekElemOff = peekElemOff128
   poke = poke128
@@ -470,11 +470,11 @@ pokeElemOff128 ptr idx (Word128 a1 a0) = do
 
 {-# INLINE sizeOf128# #-}
 sizeOf128# :: Word128 -> Int#
-sizeOf128# _ = 2# *# sizeOf# (undefined :: Word64)
+sizeOf128# _ = 2# *# sizeOf# (0 :: Word64)
 
 {-# INLINE alignment128# #-}
 alignment128# :: Word128 -> Int#
-alignment128# _ = 2# *# alignment# (undefined :: Word64)
+alignment128# _ = 2# *# alignment# (0 :: Word64)
 
 {-# INLINE indexByteArray128# #-}
 indexByteArray128# :: ByteArray# -> Int# -> Word128
