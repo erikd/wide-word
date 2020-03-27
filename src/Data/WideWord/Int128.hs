@@ -55,6 +55,10 @@ import GHC.Int (Int64 (..))
 import GHC.Real ((%))
 import GHC.Word (Word64 (..), Word32, byteSwap64)
 
+#if WORD_SIZE_IN_BITS < 64
+import GHC.IntWord64
+#endif
+
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
 data Int128 = Int128
