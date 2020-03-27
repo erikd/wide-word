@@ -49,6 +49,9 @@ import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), Word32, byteSwap64)
 
+#if WORD_SIZE_IN_BITS < 64
+import GHC.IntWord64
+#endif
 
 import Numeric (showHex)
 
