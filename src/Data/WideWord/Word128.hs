@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -46,6 +47,7 @@ import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, pl
                 , quotRemWord2#, subWordC#, timesWord#, timesWord2#, xor#)
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
+import GHC.Generics
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), Word32, byteSwap64)
 
@@ -61,7 +63,7 @@ data Word128 = Word128
   { word128Hi64 :: !Word64
   , word128Lo64 :: !Word64
   }
-  deriving (Eq, Data, Ix, Typeable)
+  deriving (Eq, Data, Generic, Ix, Typeable)
 
 byteSwapWord128 :: Word128 -> Word128
 byteSwapWord128 (Word128 a1 a0) = Word128 (byteSwap64 a0) (byteSwap64 a1)
