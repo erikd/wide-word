@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -45,6 +46,7 @@ import GHC.Base (Int (..), and#, minusWord#, not#, or#, plusWord#, plusWord2#
                 , subWordC#, timesWord#, timesWord2#, xor#)
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
+import GHC.Generics
 import GHC.Real ((%))
 import GHC.Word (Word64 (..), Word32)
 
@@ -62,7 +64,7 @@ data Word256 = Word256
   , word256m0 :: !Word64
   , word256lo :: !Word64
   }
-  deriving (Eq, Data, Ix, Typeable)
+  deriving (Eq, Data, Generic, Ix, Typeable)
 
 showHexWord256 :: Word256 -> String
 showHexWord256 (Word256 a3 a2 a1 a0)
