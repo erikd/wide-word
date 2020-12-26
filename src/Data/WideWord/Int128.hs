@@ -122,7 +122,7 @@ instance Bits Int128 where
 
   bitSize _ = 128
   bitSizeMaybe _ = Just 128
-  isSigned _ = False
+  isSigned _ = True
 
   testBit = testBit128
   bit = bit128
