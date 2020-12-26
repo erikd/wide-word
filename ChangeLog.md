@@ -1,5 +1,10 @@
 # Revision history for wide-word
 
+## 0.1.1.2 -- 2020-12-26
+
+* Derive Generic for Int128, Word128 and Word256.
+* Fix Bits.isSigned instance for Int128.
+
 ## 0.1.1.1 -- 2020-03-22
 
 * Make `sizeOf` and `alignment` methods of `Word256` `Prim` and `Storable`
