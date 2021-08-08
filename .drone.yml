@@ -1,0 +1,24 @@
+kind: pipeline
+name: i386
+platform: { os: linux, arch: amd64 }
+steps:
+- name: Test
+  image: i386/ubuntu
+  commands:
+    - export LC_ALL=C.UTF-8
+    - apt-get update -y
+    - apt-get install -y ghc cabal-install zlib1g-dev
+    # Build and install a modern cabal
+    - cabal --version
+    - cabal update
+    - cabal install cabal-install
+    - export PATH="$HOME/.cabal/bin:$PATH"
+    - hash -r
+    # Now with a modern cabal
+    - cabal --version
+    - cabal update
+    - cabal configure --enable-tests --constraint="quickcheck-classes -aeson -semigroupoids -vector"
+    - cabal build
+    - cabal test --test-show-details=streaming -j1
+    - cabal haddock
+    - cabal sdist
