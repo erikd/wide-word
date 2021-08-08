@@ -1,0 +1,35 @@
+name: ci
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        ghc: ['8.0', '8.2', '8.4', '8.6', '8.8', '8.10', '9.0']
+    steps:
+    - uses: actions/checkout@v2
+    - uses: haskell/actions/setup@v1
+      id: setup-haskell-cabal
+      with:
+        ghc-version: ${{ matrix.ghc }}
+    - name: Update cabal package database
+      run: cabal update
+    - uses: actions/cache@v2
+      name: Cache cabal stuff
+      with:
+        path: |
+          ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+          dist-newstyle
+        key: ${{ runner.os }}-${{ matrix.ghc }}
+    - name: Build
+      run: |
+         cabal configure --enable-tests --constraint="quickcheck-classes -aeson -semigroupoids -vector"
+         cabal build
+         cabal test --test-show-details=streaming -j1
+         cabal haddock
+         cabal sdist
