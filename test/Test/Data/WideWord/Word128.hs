@@ -316,7 +316,7 @@ prop_peekElemOff_pokeElemOff =
 
 prop_ToFromPrimArray :: Property
 prop_ToFromPrimArray =
-  propertyCount $ do
+  H.withTests 2000 . H.property $ do
     as <- H.forAll $
       Gen.list (fromIntegral <$> (Range.linearBounded :: Range.Range Word8)) genWord128
     as === primArrayToList (primArrayFromList as)
@@ -324,7 +324,7 @@ prop_ToFromPrimArray =
 
 prop_WriteReadPrimArray :: Property
 prop_WriteReadPrimArray =
-  propertyCount $ do
+  H.withTests 2000 . H.property $ do
     as <- H.forAll $ Gen.list (Range.linear 1 256) genWord128
     unless (null as) $ do
       let len = length as
