@@ -30,6 +30,9 @@ jobs:
       run: |
          cabal configure --enable-tests --constraint="quickcheck-classes -aeson -semigroupoids -vector"
          cabal build
-         cabal test --test-show-details=streaming -j1
          cabal haddock
          cabal sdist
+    - name: Test
+      if: ${{ matrix.ghc != '8.0' }}
+      run: |
+         cabal test --test-show-details=streaming -j1
