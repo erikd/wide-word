@@ -75,5 +75,5 @@ test-suite laws
                      , QuickCheck                    >= 2.9.2       && < 2.15
                      , quickcheck-classes            >= 0.6.3       && < 0.7.0
                      , primitive
-                     , semirings                     >= 0.2         && < 0.7
+                     , semirings                     >= 0.2         && < 0.8
                      , wide-word
