@@ -59,11 +59,16 @@ import Numeric (showHex)
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
+import Data.Hashable (Hashable,hashWithSalt)
+
 data Word128 = Word128
   { word128Hi64 :: !Word64
   , word128Lo64 :: !Word64
   }
   deriving (Eq, Data, Generic, Ix, Typeable)
+
+instance Hashable Word128 where
+  hashWithSalt s (Word128 a1 a2) = s `hashWithSalt` a1 `hashWithSalt` a2
 
 byteSwapWord128 :: Word128 -> Word128
 byteSwapWord128 (Word128 a1 a0) = Word128 (byteSwap64 a0) (byteSwap64 a1)

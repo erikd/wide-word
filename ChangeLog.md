@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.2.0 -- 2022-??-??
+
+* Add Hashable instances for Int128, Word128, and Word256.
+
 ## 0.1.1.2 -- 2020-12-26
 
 * Derive Generic for Int128, Word128 and Word256.

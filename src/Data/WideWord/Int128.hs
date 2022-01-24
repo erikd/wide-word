@@ -63,11 +63,16 @@ import GHC.IntWord64
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
+import Data.Hashable (Hashable,hashWithSalt)
+
 data Int128 = Int128
   { int128Hi64 :: !Word64
   , int128Lo64 :: !Word64
   }
   deriving (Eq, Data, Generic, Ix, Typeable)
+
+instance Hashable Int128 where
+  hashWithSalt s (Int128 a1 a2) = s `hashWithSalt` a1 `hashWithSalt` a2
 
 byteSwapInt128 :: Int128 -> Int128
 byteSwapInt128 (Int128 a1 a0) = Int128 (byteSwap64 a0) (byteSwap64 a1)
