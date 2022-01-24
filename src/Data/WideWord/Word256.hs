@@ -57,6 +57,7 @@ import GHC.IntWord64
 import Numeric (showHex)
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
+import Data.Hashable (Hashable,hashWithSalt)
 
 data Word256 = Word256
   { word256hi :: !Word64
@@ -65,6 +66,10 @@ data Word256 = Word256
   , word256lo :: !Word64
   }
   deriving (Eq, Data, Generic, Ix, Typeable)
+
+instance Hashable Word256 where
+  hashWithSalt s (Word256 a1 a2 a3 a4) =
+    s `hashWithSalt` a1 `hashWithSalt` a2 `hashWithSalt` a3 `hashWithSalt` a4
 
 showHexWord256 :: Word256 -> String
 showHexWord256 (Word256 a3 a2 a1 a0)
