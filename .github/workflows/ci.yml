@@ -36,3 +36,33 @@ jobs:
       if: ${{ matrix.ghc != '8.0' }}
       run: |
          cabal test --test-show-details=streaming -j1
+
+  emulated-i386:
+    runs-on: ubuntu-latest
+    container:
+      image: i386/debian:sid
+    steps:
+    - uses: actions/checkout@v2
+    - uses: haskell/actions/setup@v1
+      id: setup-haskell-cabal
+      with:
+        ghc-version: 8.10
+    - name: Update cabal package database
+      run: cabal update
+    - uses: actions/cache@v2
+      name: Cache cabal stuff
+      with:
+        path: |
+          ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+          dist-newstyle
+        key: i386-ghc-8.10
+
+    - name: Build
+      run: |
+         cabal configure --enable-tests --constraint="quickcheck-classes -aeson -semigroupoids -vector"
+         cabal build
+         cabal haddock
+         cabal sdist
+    - name: Test
+      run: |
+         cabal test --test-show-details=streaming -j1
