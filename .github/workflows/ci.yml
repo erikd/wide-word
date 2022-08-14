@@ -42,7 +42,7 @@ jobs:
     container:
       image: i386/debian:sid
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v1
     - uses: haskell/actions/setup@v1
       id: setup-haskell-cabal
       with:
