@@ -45,7 +45,7 @@ jobs:
     - uses: haskell/actions/setup@v1
       id: setup-haskell-cabal
       with:
-        ghc-version: 8.10
+        ghc-version: '8.10'
     - name: Update cabal package database
       run: cabal update
     - uses: actions/cache@v2
