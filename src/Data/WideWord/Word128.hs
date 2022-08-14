@@ -48,6 +48,7 @@ import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, pl
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Generics
+import GHC.Prim (Word#)
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word64 (..), Word32, byteSwap64)
 
@@ -235,44 +236,60 @@ fromEnum128 (Word128 _ a0) = fromEnum a0
 -- -----------------------------------------------------------------------------
 -- Functions for `Num` instance.
 
+#if WORD_SIZE_IN_BITS < 64
+
+fromWord64 = word64TofromWord#
+toWord64 = wordToWord64#
+
+#else
+
+fromWord64 :: Word# -> Word#
+fromWord64 x = x
+
+toWord64 :: Word# -> Word#
+toWord64 x = x
+
+#endif
+
 {-# INLINABLE plus128 #-}
 plus128 :: Word128 -> Word128 -> Word128
 plus128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# s1) (W64# s0)
+  Word128 (W64# (toWord64 s1)) (W64# (toWord64 s0))
   where
-    !(# c1, s0 #) = plusWord2# a0 b0
-    s1a = plusWord# a1 b1
+    !(# c1, s0 #) = plusWord2# (fromWord64 a0) (fromWord64 b0)
+    s1a = plusWord# (fromWord64 a1) (fromWord64 b1)
     s1 = plusWord# c1 s1a
 
 {-# INLINABLE minus128 #-}
 minus128 :: Word128 -> Word128 -> Word128
 minus128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# d1) (W64# d0)
+  Word128 (W64# (toWord64 d1)) (W64# (toWord64 d0))
   where
-    !(# d0, c1 #) = subWordC# a0 b0
-    a1c = minusWord# a1 (int2Word# c1)
-    d1 = minusWord# a1c b1
+    !(# d0, c1 #) = subWordC# (fromWord64 a0) (fromWord64 b0)
+    a1c = minusWord# (fromWord64 a1) (int2Word# c1)
+    d1 = minusWord# a1c (fromWord64 b1)
 
 times128 :: Word128 -> Word128 -> Word128
 times128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# p1) (W64# p0)
+  Word128 (W64# (toWord64 p1)) (W64# (toWord64 p0))
   where
-    !(# c1, p0 #) = timesWord2# a0 b0
-    p1a = timesWord# a1 b0
-    p1b = timesWord# a0 b1
+    !(# c1, p0 #) = timesWord2# (fromWord64 a0) (fromWord64 b0)
+    p1a = timesWord# (fromWord64 a1) (fromWord64 b0)
+    p1b = timesWord# (fromWord64 a0) (fromWord64 b1)
     p1c = plusWord# p1a p1b
     p1 = plusWord# p1c c1
 
 {-# INLINABLE negate128 #-}
 negate128 :: Word128 -> Word128
 negate128 (Word128 (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) 1## of
-    (# c, s #) -> Word128 (W64# (plusWord# (not# a1) c)) (W64# s)
+  case plusWord2# (not# (fromWord64 a0)) 1## of
+    (# c, s #) -> Word128 (W64# (toWord64 (plusWord# (not# (fromWord64 a1)) c))) (W64# (toWord64 s))
 
 {-# INLINABLE signum128 #-}
 signum128 :: Word128 -> Word128
-signum128 (Word128 (W64# 0##) (W64# 0##)) = zeroWord128
-signum128 _ = oneWord128
+signum128 (Word128 (W64# a) (W64# b))
+  | 0## <- fromWord64 a, 0## <- fromWord64 b = zeroWord128
+  | otherwise = oneWord128
 
 fromInteger128 :: Integer -> Word128
 fromInteger128 i =
@@ -284,17 +301,17 @@ fromInteger128 i =
 {-# INLINABLE and128 #-}
 and128 :: Word128 -> Word128 -> Word128
 and128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# (and# a1 b1)) (W64# (and# a0 b0))
+  Word128 (W64# (toWord64 (and# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (and# (fromWord64 a0) (fromWord64 b0))))
 
 {-# INLINABLE or128 #-}
 or128 :: Word128 -> Word128 -> Word128
 or128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# (or# a1 b1)) (W64# (or# a0 b0))
+  Word128 (W64# (toWord64 (or# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (or# (fromWord64 a0) (fromWord64 b0))))
 
 {-# INLINABLE xor128 #-}
 xor128 :: Word128 -> Word128 -> Word128
 xor128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+  Word128 (W64# (toWord64 (xor# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (xor# (fromWord64 a0) (fromWord64 b0))))
 
 {-# INLINABLE complement128 #-}
 complement128 :: Word128 -> Word128
@@ -417,10 +434,10 @@ quotRemFour num@(Word128 n1 _) den@(Word128 d1 _)
 {-# INLINE halfTimes128 #-}
 halfTimes128 :: Word128 -> Word64 -> Word128
 halfTimes128 (Word128 (W64# a1) (W64# a0)) (W64# b0) =
-  Word128 (W64# p1) (W64# p0)
+  Word128 (W64# (toWord64 p1)) (W64# (toWord64 p0))
   where
-    !(# c1, p0 #) = timesWord2# a0 b0
-    p1a = timesWord# a1 b0
+    !(# c1, p0 #) = timesWord2# (fromWord64 a0) (fromWord64 b0)
+    p1a = timesWord# (fromWord64 a1) (fromWord64 b0)
     p1 = plusWord# p1a c1
 
 {-# INLINE quotRemThree #-}
@@ -438,9 +455,8 @@ quotRemThree num@(Word128 n1 n0) den
 {-# INLINE quotRemWord64 #-}
 quotRemWord64 :: Word64 -> Word64 -> Word64 -> (Word64, Word64)
 quotRemWord64 (W64# n1) (W64# n0) (W64# d) =
-  case quotRemWord2# n1 n0 d of
-    (# q, r #) -> (W64# q, W64# r)
-
+  case quotRemWord2# (fromWord64 n1) (fromWord64 n0) (fromWord64 d) of
+    (# q, r #) -> (W64# (toWord64 q), W64# (toWord64 r))
 
 {-# INLINE quotRemTwo #-}
 quotRemTwo :: Word64 -> Word64 -> (Word128, Word128)

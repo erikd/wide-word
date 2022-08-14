@@ -47,6 +47,7 @@ import GHC.Base (Int (..), and#, minusWord#, not#, or#, plusWord#, plusWord2#
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Generics
+import GHC.Prim (Word#)
 import GHC.Real ((%))
 import GHC.Word (Word64 (..), Word32)
 
@@ -251,62 +252,77 @@ fromEnum256 (Word256 _ _ _ a0) = fromEnum a0
 -- -----------------------------------------------------------------------------
 -- Functions for `Num` instance.
 
+#if WORD_SIZE_IN_BITS < 64
+
+fromWord64 = word64TofromWord#
+toWord64 = wordToWord64#
+
+#else
+
+fromWord64 :: Word# -> Word#
+fromWord64 x = x
+
+toWord64 :: Word# -> Word#
+toWord64 x = x
+
+#endif
+
 {-# INLINABLE plus256 #-}
 plus256 :: Word256 -> Word256 -> Word256
 plus256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
         (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
+  Word256 (W64# (toWord64 s3)) (W64# (toWord64 s2)) (W64# (toWord64 s1)) (W64# (toWord64 s0))
   where
-    !(# c1, s0 #) = plusWord2# a0 b0
-    !(# c2a, s1a #) = plusWord2# a1 b1
+    !(# c1, s0 #) = plusWord2# (fromWord64 a0) (fromWord64 b0)
+    !(# c2a, s1a #) = plusWord2# (fromWord64 a1) (fromWord64 b1)
     !(# c2b, s1 #) = plusWord2# s1a c1
     c2 = plusWord# c2a c2b
-    !(# c3a, s2a #) = plusWord2# a2 b2
+    !(# c3a, s2a #) = plusWord2# (fromWord64 a2) (fromWord64 b2)
     !(# c3b, s2 #) = plusWord2# s2a c2
     c3 = plusWord# c3a c3b
-    s3 = plusWord# a3 (plusWord# b3 c3)
+    s3 = plusWord# (fromWord64 a3) (plusWord# (fromWord64 b3) c3)
 
 {-# INLINABLE minus256 #-}
 minus256 :: Word256 -> Word256 -> Word256
 minus256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
          (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
+  Word256 (W64# (toWord64 s3)) (W64# (toWord64 s2)) (W64# (toWord64 s1)) (W64# (toWord64 s0))
   where
-    !(# s0, v1 #) = subWordC# a0 b0
+    !(# s0, v1 #) = subWordC# (fromWord64 a0) (fromWord64 b0)
     !(# s1, v2 #) =
       case v1 of
-        0# -> subWordC# a1 b1
+        0# -> subWordC# (fromWord64 a1) (fromWord64 b1)
         _ ->
-          case a1 of
-            0## -> (# minusWord# 0xFFFFFFFFFFFFFFFF## b1, 1# #)
-            _ -> subWordC# (minusWord# a1 1##) b1
+          case fromWord64 a1 of
+            0## -> (# minusWord# 0xFFFFFFFFFFFFFFFF## (fromWord64 b1), 1# #)
+            _ -> subWordC# (minusWord# (fromWord64 a1) 1##) (fromWord64 b1)
     !(# s2, v3 #) =
       case v2 of
-        0# -> subWordC# a2 b2
+        0# -> subWordC# (fromWord64 a2) (fromWord64 b2)
         _ ->
-          case a2 of
-            0## -> (# minusWord# 0xFFFFFFFFFFFFFFFF## b2, 1# #)
-            _ -> subWordC# (minusWord# a2 1##) b2
+          case fromWord64 a2 of
+            0## -> (# minusWord# 0xFFFFFFFFFFFFFFFF## (fromWord64 b2), 1# #)
+            _ -> subWordC# (minusWord# (fromWord64 a2) 1##) (fromWord64 b2)
     !s3 =
       case v3 of
-        0# -> minusWord# a3 b3
-        _ -> minusWord# (minusWord# a3 1##) b3
+        0# -> minusWord# (fromWord64 a3) (fromWord64 b3)
+        _ -> minusWord# (minusWord# (fromWord64 a3) 1##) (fromWord64 b3)
 
 times256 :: Word256 -> Word256 -> Word256
 times256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
          (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# r3) (W64# r2) (W64# r1) (W64# r0)
+  Word256 (W64# (toWord64 r3)) (W64# (toWord64 r2)) (W64# (toWord64 r1)) (W64# (toWord64 r0))
   where
-    !(# c00, p00 #) = timesWord2# a0 b0
-    !(# c01, p01 #) = timesWord2# a0 b1
-    !(# c02, p02 #) = timesWord2# a0 b2
-    !p03 = timesWord# a0 b3
-    !(# c10, p10 #) = timesWord2# a1 b0
-    !(# c11, p11 #) = timesWord2# a1 b1
-    !p12 = timesWord# a1 b2
-    !(# c20, p20 #) = timesWord2# a2 b0
-    !p21 = timesWord# a2 b1
-    !p30 = timesWord# a3 b0
+    !(# c00, p00 #) = timesWord2# (fromWord64 a0) (fromWord64 b0)
+    !(# c01, p01 #) = timesWord2# (fromWord64 a0) (fromWord64 b1)
+    !(# c02, p02 #) = timesWord2# (fromWord64 a0) (fromWord64 b2)
+    !p03 = timesWord# (fromWord64 a0) (fromWord64 b3)
+    !(# c10, p10 #) = timesWord2# (fromWord64 a1) (fromWord64 b0)
+    !(# c11, p11 #) = timesWord2# (fromWord64 a1) (fromWord64 b1)
+    !p12 = timesWord# (fromWord64 a1) (fromWord64 b2)
+    !(# c20, p20 #) = timesWord2# (fromWord64 a2) (fromWord64 b0)
+    !p21 = timesWord# (fromWord64 a2) (fromWord64 b1)
+    !p30 = timesWord# (fromWord64 a3) (fromWord64 b0)
     !r0 = p00
     !c1 = c00
     !(# c2x, r1a #) = plusWord2# p01 p10
@@ -328,16 +344,20 @@ times256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
 {-# INLINABLE negate256 #-}
 negate256 :: Word256 -> Word256
 negate256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) 1## of
-    (# c1, s0 #) -> case plusWord2# (not# a1) c1 of
-      (# c2, s1 #) -> case plusWord2# (not# a2) c2 of
-        (# c3, s2 #) -> case plusWord# (not# a3) c3 of
-          s3 -> Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
+  case plusWord2# (not# (fromWord64 a0)) 1## of
+    (# c1, s0 #) -> case plusWord2# (not# (fromWord64 a1)) c1 of
+      (# c2, s1 #) -> case plusWord2# (not# (fromWord64 a2)) c2 of
+        (# c3, s2 #) -> case plusWord# (not# (fromWord64 a3)) c3 of
+          s3 -> Word256 (W64# (toWord64 s3)) (W64# (toWord64 s2)) (W64# (toWord64 s1)) (W64# (toWord64 s0))
 
 {-# INLINABLE signum256 #-}
 signum256 :: Word256 -> Word256
-signum256 (Word256 (W64# 0##) (W64# 0##) (W64# 0##) (W64# 0##)) = zeroWord256
-signum256 _ = oneWord256
+signum256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
+  | 0## <- fromWord64 a3
+  , 0## <- fromWord64 a2
+  , 0## <- fromWord64 a1
+  , 0## <- fromWord64 a0 = zeroWord256
+  | otherwise = oneWord256
 
 fromInteger256 :: Integer -> Word256
 fromInteger256 i = Word256
@@ -353,28 +373,29 @@ fromInteger256 i = Word256
 and256 :: Word256 -> Word256 -> Word256
 and256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
        (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# (and# a3 b3)) (W64# (and# a2 b2))
-          (W64# (and# a1 b1)) (W64# (and# a0 b0))
+  Word256 (W64# (toWord64 (and# (fromWord64 a3) (fromWord64 b3)))) (W64# (toWord64 (and# (fromWord64 a2) (fromWord64 b2))))
+          (W64# (toWord64 (and# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (and# (fromWord64 a0) (fromWord64 b0))))
 
 {-# INLINABLE or256 #-}
 or256 :: Word256 -> Word256 -> Word256
 or256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
       (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# (or# a3 b3)) (W64# (or# a2 b2))
-          (W64# (or# a1 b1)) (W64# (or# a0 b0))
+  Word256 (W64# (toWord64 (or# (fromWord64 a3) (fromWord64 b3)))) (W64# (toWord64 (or# (fromWord64 a2) (fromWord64 b2))))
+          (W64# (toWord64 (or# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (or# (fromWord64 a0) (fromWord64 b0))))
 
 {-# INLINABLE xor256 #-}
 xor256 :: Word256 -> Word256 -> Word256
 xor256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
        (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# (xor# a3 b3)) (W64# (xor# a2 b2))
-          (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+  Word256 (W64# (toWord64 (xor# (fromWord64 a3) (fromWord64 b3)))) (W64# (toWord64 (xor# (fromWord64 a2) (fromWord64 b2))))
+          (W64# (toWord64 (xor# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (xor# (fromWord64 a0) (fromWord64 b0))))
 
 {-# INLINABLE complement256 #-}
 complement256 :: Word256 -> Word256
-complement256 (Word256 a3 a2 a1 a0) = Word256
-  (complement a3) (complement a2)
-  (complement a1) (complement a0)
+complement256 (Word256 a3 a2 a1 a0) =
+  Word256
+    (complement a3) (complement a2)
+    (complement a1) (complement a0)
 
 -- Probably not worth inlining this.
 shiftL256 :: Word256 -> Int -> Word256
@@ -504,10 +525,10 @@ quotRem256 a b =
 
 toInteger256 :: Word256 -> Integer
 toInteger256 (Word256 a3 a2 a1 a0) =
-    (toInteger a3 `shiftL` 192)
-  + (toInteger a2 `shiftL` 128)
-  + (toInteger a1 `shiftL` 64)
-  + (toInteger a0)
+  (toInteger a3 `shiftL` 192)
+    + (toInteger a2 `shiftL` 128)
+    + (toInteger a1 `shiftL` 64)
+    + toInteger a0
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Storable` instance.

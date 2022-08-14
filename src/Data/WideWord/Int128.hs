@@ -53,6 +53,7 @@ import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, pl
 import GHC.Enum (predError, succError)
 import GHC.Exts ((+#), (*#), State#, Int#, Addr#, ByteArray#, MutableByteArray#)
 import GHC.Generics
+import GHC.Prim (Word#)
 import GHC.Int (Int64 (..))
 import GHC.Real ((%))
 import GHC.Word (Word64 (..), Word32, byteSwap64)
@@ -205,7 +206,11 @@ compare128 :: Int128 -> Int128 -> Ordering
 compare128 (Int128 a1 a0) (Int128 b1 b0) =
   compare (int64OfWord64 a1) (int64OfWord64 b1) <> compare a0 b0
   where
+#if WORD_SIZE_IN_BITS < 64
+    int64OfWord64 (W64# w) = I64# (word64ToInt64# w)
+#else
     int64OfWord64 (W64# w) = I64# (word2Int# w)
+#endif
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.
@@ -238,39 +243,54 @@ fromEnum128 (Int128 _ a0) = fromEnum a0
 -- -----------------------------------------------------------------------------
 -- Functions for `Num` instance.
 
+#if WORD_SIZE_IN_BITS < 64
+
+fromWord64 = word64TofromWord#
+toWord64 = wordToWord64#
+
+#else
+
+fromWord64 :: Word# -> Word#
+fromWord64 x = x
+
+toWord64 :: Word# -> Word#
+toWord64 x = x
+
+#endif
+
 {-# INLINABLE plus128 #-}
 plus128 :: Int128 -> Int128 -> Int128
 plus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# s1) (W64# s0)
+  Int128 (W64# (toWord64 s1)) (W64# (toWord64 s0))
   where
-    !(# c1, s0 #) = plusWord2# a0 b0
-    s1a = plusWord# a1 b1
+    !(# c1, s0 #) = plusWord2# (fromWord64 a0) (fromWord64 b0)
+    s1a = plusWord# (fromWord64 a1) (fromWord64 b1)
     s1 = plusWord# c1 s1a
 
 {-# INLINABLE minus128 #-}
 minus128 :: Int128 -> Int128 -> Int128
 minus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# d1) (W64# d0)
+  Int128 (W64# (toWord64 d1)) (W64# (toWord64 d0))
   where
-    !(# d0, c1 #) = subWordC# a0 b0
-    a1c = minusWord# a1 (int2Word# c1)
-    d1 = minusWord# a1c b1
+    !(# d0, c1 #) = subWordC# (fromWord64 a0) (fromWord64 b0)
+    a1c = minusWord# (fromWord64 a1) (int2Word# c1)
+    d1 = minusWord# a1c (fromWord64 b1)
 
 times128 :: Int128 -> Int128 -> Int128
 times128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# p1) (W64# p0)
+  Int128 (W64# (toWord64 p1)) (W64# (toWord64 p0))
   where
-    !(# c1, p0 #) = timesWord2# a0 b0
-    p1a = timesWord# a1 b0
-    p1b = timesWord# a0 b1
+    !(# c1, p0 #) = timesWord2# (fromWord64 a0) (fromWord64 b0)
+    p1a = timesWord# (fromWord64 a1) (fromWord64 b0)
+    p1b = timesWord# (fromWord64 a0) (fromWord64 b1)
     p1c = plusWord# p1a p1b
     p1 = plusWord# p1c c1
 
 {-# INLINABLE negate128 #-}
 negate128 :: Int128 -> Int128
 negate128 (Int128 (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) 1## of
-    (# c, s #) -> Int128 (W64# (plusWord# (not# a1) c)) (W64# s)
+  case plusWord2# (not# (fromWord64 a0)) 1## of
+    (# c, s #) -> Int128 (W64# (toWord64 (plusWord# (not# (fromWord64 a1)) c))) (W64# (toWord64 s))
 
 {-# INLINABLE abs128 #-}
 abs128 :: Int128 -> Int128
@@ -299,17 +319,17 @@ fromInteger128 i =
 {-# INLINABLE and128 #-}
 and128 :: Int128 -> Int128 -> Int128
 and128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# (and# a1 b1)) (W64# (and# a0 b0))
+  Int128 (W64# (toWord64 (and# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (and# (fromWord64 a0) (fromWord64 b0))))
 
 {-# INLINABLE or128 #-}
 or128 :: Int128 -> Int128 -> Int128
 or128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# (or# a1 b1)) (W64# (or# a0 b0))
+  Int128 (W64# (toWord64 (or# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (or# (fromWord64 a0) (fromWord64 b0))))
 
 {-# INLINABLE xor128 #-}
 xor128 :: Int128 -> Int128 -> Int128
 xor128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+  Int128 (W64# (toWord64 (xor# (fromWord64 a1) (fromWord64 b1)))) (W64# (toWord64 (xor# (fromWord64 a0) (fromWord64 b0))))
 
 -- Probably not worth inlining this.
 shiftL128 :: Int128 -> Int -> Int128
