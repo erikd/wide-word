@@ -49,6 +49,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: build
       run: |
+         cabal --version
          cabal update
          cabal configure --enable-tests --constraint="quickcheck-classes -aeson -semigroupoids -vector"
          cabal build
