@@ -39,7 +39,7 @@ jobs:
   emulated-i386:
     runs-on: ubuntu-latest
     container:
-      image: i386/22.04
+      image: i386/ubuntu-jammy
     steps:
     - name: install
       run: |
