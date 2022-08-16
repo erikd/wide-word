@@ -11,8 +11,12 @@ jobs:
     steps:
     - name: install
       run: |
+          lsb_release -a
+          cat /etc/apt/sources.list
           apt-get update -y
           apt-get upgrade -y
+          apt-get install -y software-properties-common
+          add-apt-repository -y ppa:hvr/ghc
           apt-get install -y ghc cabal-install libghc-quickcheck2-dev libghc-tasty-dev libghc-tasty-quickcheck-dev git make curl libghc-exceptions-dev
       shell: bash
     - uses: actions/checkout@v1
