@@ -42,13 +42,14 @@ import Data.Semigroup ((<>))
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
-import GHC.Base (Int (..), and#, minusWord#, not#, or#, plusWord#, plusWord2#
-                , subWordC#, timesWord#, timesWord2#, xor#)
+import GHC.Base (Int (..))
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Generics
 import GHC.Real ((%))
 import GHC.Word (Word64 (..), Word32)
+
+import Data.WideWord.Compat
 
 #if WORD_SIZE_IN_BITS < 64
 import GHC.IntWord64
@@ -192,6 +193,10 @@ instance Prim Word256 where
 -- -----------------------------------------------------------------------------
 -- Rewrite rules.
 
+#if __GLASGOW_HASKELL__ >= 904
+{-# INLINE[1] fromIntegral #-}
+#endif
+
 {-# RULES
 "fromIntegral :: Word256 -> Word256" fromIntegral = id :: Word256 -> Word256
 
@@ -274,23 +279,23 @@ minus256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
   where
     !(# s0, v1 #) = subWordC# a0 b0
     !(# s1, v2 #) =
-      case v1 of
+      case compatCaseOnIntLiteral# v1 of
         0# -> subWordC# a1 b1
         _ ->
-          case a1 of
-            0## -> (# minusWord# 0xFFFFFFFFFFFFFFFF## b1, 1# #)
-            _ -> subWordC# (minusWord# a1 1##) b1
+          case compatCaseOnWordLiteral# a1 of
+            0## -> (# minusWord# (compatWordLiteral# 0xFFFFFFFFFFFFFFFF##) b1, compatIntLiteral# 1# #)
+            _ -> subWordC# (minusWord# a1 (compatWordLiteral# 1##)) b1
     !(# s2, v3 #) =
-      case v2 of
+      case compatCaseOnIntLiteral# v2 of
         0# -> subWordC# a2 b2
         _ ->
-          case a2 of
-            0## -> (# minusWord# 0xFFFFFFFFFFFFFFFF## b2, 1# #)
-            _ -> subWordC# (minusWord# a2 1##) b2
+          case compatCaseOnWordLiteral# a2 of
+            0## -> (# minusWord# (compatWordLiteral# 0xFFFFFFFFFFFFFFFF##) b2, compatIntLiteral# 1# #)
+            _ -> subWordC# (minusWord# a2 (compatWordLiteral# 1##)) b2
     !s3 =
-      case v3 of
+      case compatCaseOnIntLiteral# v3 of
         0# -> minusWord# a3 b3
-        _ -> minusWord# (minusWord# a3 1##) b3
+        _ -> minusWord# (minusWord# a3 (compatWordLiteral# 1##)) b3
 
 times256 :: Word256 -> Word256 -> Word256
 times256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
@@ -328,7 +333,7 @@ times256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
 {-# INLINABLE negate256 #-}
 negate256 :: Word256 -> Word256
 negate256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) 1## of
+  case plusWord2# (not# a0) (compatWordLiteral# 1##) of
     (# c1, s0 #) -> case plusWord2# (not# a1) c1 of
       (# c2, s1 #) -> case plusWord2# (not# a2) c2 of
         (# c3, s2 #) -> case plusWord# (not# a3) c3 of
@@ -336,8 +341,13 @@ negate256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0)) =
 
 {-# INLINABLE signum256 #-}
 signum256 :: Word256 -> Word256
-signum256 (Word256 (W64# 0##) (W64# 0##) (W64# 0##) (W64# 0##)) = zeroWord256
-signum256 _ = oneWord256
+signum256 (Word256 (W64# a) (W64# b) (W64# c) (W64# d))
+  | isZeroWord# a
+  , isZeroWord# b
+  , isZeroWord# c
+  , isZeroWord# d
+  = zeroWord256
+  | otherwise = oneWord256
 
 fromInteger256 :: Integer -> Word256
 fromInteger256 i = Word256
@@ -507,7 +517,7 @@ toInteger256 (Word256 a3 a2 a1 a0) =
     (toInteger a3 `shiftL` 192)
   + (toInteger a2 `shiftL` 128)
   + (toInteger a1 `shiftL` 64)
-  + (toInteger a0)
+  + toInteger a0
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Storable` instance.
