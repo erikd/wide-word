@@ -1,3 +1,4 @@
+{-# language ViewPatterns #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -59,6 +60,10 @@ import GHC.Word (Word64 (..), Word32, byteSwap64)
 
 #if WORD_SIZE_IN_BITS < 64
 import GHC.IntWord64
+#endif
+
+#if MIN_VERSION_base(4,17,0)
+import GHC.Prim
 #endif
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
@@ -205,7 +210,11 @@ compare128 :: Int128 -> Int128 -> Ordering
 compare128 (Int128 a1 a0) (Int128 b1 b0) =
   compare (int64OfWord64 a1) (int64OfWord64 b1) <> compare a0 b0
   where
+#if MIN_VERSION_base(4,17,0)
+    int64OfWord64 (W64# (word64ToWord# -> w)) = I64# (intToInt64# (word2Int# w))
+#else
     int64OfWord64 (W64# w) = I64# (word2Int# w)
+#endif
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.
@@ -240,8 +249,13 @@ fromEnum128 (Int128 _ a0) = fromEnum a0
 
 {-# INLINABLE plus128 #-}
 plus128 :: Int128 -> Int128 -> Int128
+#if MIN_VERSION_base(4,17,0)
+plus128 (Int128 (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0))) (Int128 (W64# (word64ToWord# -> b1)) (W64# (word64ToWord# -> b0))) =
+  Int128 (W64# (wordToWord64# s1)) (W64# (wordToWord64# s0))
+#else
 plus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# s1) (W64# s0)
+#endif
   where
     !(# c1, s0 #) = plusWord2# a0 b0
     s1a = plusWord# a1 b1
@@ -249,16 +263,26 @@ plus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
 
 {-# INLINABLE minus128 #-}
 minus128 :: Int128 -> Int128 -> Int128
+#if MIN_VERSION_base(4,17,0)
+minus128 (Int128 (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0))) (Int128 (W64# (word64ToWord# -> b1)) (W64# (word64ToWord# -> b0))) =
+  Int128 (W64# (wordToWord64# d1)) (W64# (wordToWord64# d0))
+#else
 minus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# d1) (W64# d0)
+#endif
   where
     !(# d0, c1 #) = subWordC# a0 b0
     a1c = minusWord# a1 (int2Word# c1)
     d1 = minusWord# a1c b1
 
 times128 :: Int128 -> Int128 -> Int128
+#if MIN_VERSION_base(4,17,0)
+times128 (Int128 (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0))) (Int128 (W64# (word64ToWord# -> b1)) (W64# (word64ToWord# -> b0))) =
+  Int128 (W64# (wordToWord64# p1)) (W64# (wordToWord64# p0))
+#else
 times128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# p1) (W64# p0)
+#endif
   where
     !(# c1, p0 #) = timesWord2# a0 b0
     p1a = timesWord# a1 b0
@@ -269,8 +293,13 @@ times128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
 {-# INLINABLE negate128 #-}
 negate128 :: Int128 -> Int128
 negate128 (Int128 (W64# a1) (W64# a0)) =
+#if MIN_VERSION_base(4,17,0)
+  case plusWord2# (not# (word64ToWord# a0)) 1## of
+    (# c, s #) -> Int128 (W64# (plusWord64# (not64# a1) (wordToWord64# c))) (W64# (wordToWord64# s))
+#else
   case plusWord2# (not# a0) 1## of
     (# c, s #) -> Int128 (W64# (plusWord# (not# a1) c)) (W64# s)
+#endif
 
 {-# INLINABLE abs128 #-}
 abs128 :: Int128 -> Int128
@@ -299,17 +328,30 @@ fromInteger128 i =
 {-# INLINABLE and128 #-}
 and128 :: Int128 -> Int128 -> Int128
 and128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
+#if MIN_VERSION_base(4,17,0)
+  Int128 (W64# (and64# a1 b1)) (W64# (and64# a0 b0))
+#else
   Int128 (W64# (and# a1 b1)) (W64# (and# a0 b0))
+
+#endif
 
 {-# INLINABLE or128 #-}
 or128 :: Int128 -> Int128 -> Int128
 or128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
+#if MIN_VERSION_base(4,17,0)
+  Int128 (W64# (or64# a1 b1)) (W64# (or64# a0 b0))
+#else
   Int128 (W64# (or# a1 b1)) (W64# (or# a0 b0))
+#endif
 
 {-# INLINABLE xor128 #-}
 xor128 :: Int128 -> Int128 -> Int128
 xor128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
+#if MIN_VERSION_base(4,17,0)
+  Int128 (W64# (xor64# a1 b1)) (W64# (xor64# a0 b0))
+#else
   Int128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+#endif
 
 -- Probably not worth inlining this.
 shiftL128 :: Int128 -> Int -> Int128
