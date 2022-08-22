@@ -43,8 +43,7 @@ import Data.Semigroup ((<>))
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
-import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, plusWord2#
-                , quotRemWord2#, subWordC#, timesWord#, timesWord2#, xor#)
+import GHC.Base (Int (..))
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Generics
@@ -55,6 +54,7 @@ import GHC.Word (Word64 (..), Word32, byteSwap64)
 import GHC.IntWord64
 #endif
 
+import Data.WideWord.Compat
 import Numeric (showHex)
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
@@ -184,6 +184,10 @@ instance Prim Word128 where
 -- -----------------------------------------------------------------------------
 -- Rewrite rules.
 
+#if __GLASGOW_HASKELL__ >= 904
+{-# INLINE[1] fromIntegral #-}
+#endif
+
 {-# RULES
 "fromIntegral :: Word128 -> Word128" fromIntegral = id :: Word128 -> Word128
 
@@ -266,13 +270,15 @@ times128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
 {-# INLINABLE negate128 #-}
 negate128 :: Word128 -> Word128
 negate128 (Word128 (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) 1## of
+  case plusWord2# (not# a0) (compatWordLiteral# 1##) of
     (# c, s #) -> Word128 (W64# (plusWord# (not# a1) c)) (W64# s)
 
 {-# INLINABLE signum128 #-}
 signum128 :: Word128 -> Word128
-signum128 (Word128 (W64# 0##) (W64# 0##)) = zeroWord128
-signum128 _ = oneWord128
+signum128 (Word128 (W64# a) (W64# b)) =
+  if isZeroWord# a && isZeroWord# b
+    then zeroWord128
+    else oneWord128
 
 fromInteger128 :: Integer -> Word128
 fromInteger128 i =
@@ -440,7 +446,6 @@ quotRemWord64 :: Word64 -> Word64 -> Word64 -> (Word64, Word64)
 quotRemWord64 (W64# n1) (W64# n0) (W64# d) =
   case quotRemWord2# n1 n0 d of
     (# q, r #) -> (W64# q, W64# r)
-
 
 {-# INLINE quotRemTwo #-}
 quotRemTwo :: Word64 -> Word64 -> (Word128, Word128)
