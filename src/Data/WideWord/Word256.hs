@@ -44,7 +44,7 @@ import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
 import GHC.Base (Int (..), and#, minusWord#, not#, or#, plusWord#, plusWord2#
-                , subWordC#, timesWord64#, timesWord#, timesWord2#, xor#)
+                , subWordC#, timesWord#, timesWord2#, xor#)
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Generics
@@ -53,6 +53,7 @@ import GHC.Word (Word64 (..), Word32)
 
 #if MIN_VERSION_base(4,17,0)
 import GHC.Prim
+import GHC.Base (timesWord64#)
 #endif
 
 #if WORD_SIZE_IN_BITS < 64
