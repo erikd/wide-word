@@ -254,7 +254,7 @@ fromEnum256 (Word256 _ _ _ a0) = fromEnum a0
 
 #if WORD_SIZE_IN_BITS < 64
 
-fromWord64 = word64TofromWord#
+fromWord64 = word64ToWord#
 toWord64 = wordToWord64#
 
 #else
