@@ -27,4 +27,4 @@ jobs:
          cabal sdist
     - name: test
       run: |
-         cabal test --test-show-details=streaming -j1
+         LC_ALL=C.UTF-8 cabal test --test-show-details=streaming -j1
