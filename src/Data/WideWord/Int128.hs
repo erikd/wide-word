@@ -1,4 +1,3 @@
-{-# language ViewPatterns #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -49,8 +48,7 @@ import Numeric
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
-import GHC.Base (Int (..), and#, int2Word#, minusWord#, not#, or#, plusWord#, plusWord2#
-                , subWordC#, timesWord#, timesWord2#, word2Int#, xor#)
+import GHC.Base (Int (..))
 import GHC.Enum (predError, succError)
 import GHC.Exts ((+#), (*#), State#, Int#, Addr#, ByteArray#, MutableByteArray#)
 import GHC.Generics
@@ -63,12 +61,73 @@ import GHC.IntWord64
 #endif
 
 #if MIN_VERSION_base(4,17,0)
-import GHC.Prim
+import GHC.Prim (Word64#, wordToWord64#, word64ToWord#, Int64#)
 #endif
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
 import Data.Hashable (Hashable,hashWithSalt)
+
+#if MIN_VERSION_base(4,17,0)
+import qualified GHC.Base
+#else
+import GHC.Base (int2Word#, subWordC#, plusWord2#, or#, minusWord#, stimesWord2#, word2Int#)
+#endif
+
+#if MIN_VERSION_base(4,17,0)
+plusWord2# :: Word64# -> Word64# -> (# Word64#, Word64# #)
+plusWord2# a b =
+ case GHC.Base.plusWord2# (word64ToWord# a) (word64ToWord# b) of
+   (# a', b' #) ->
+     (# wordToWord64# a', wordToWord64# b' #)
+
+timesWord2# :: Word64# -> Word64# -> (# Word64#, Word64# #)
+timesWord2# a b =
+  case GHC.Base.timesWord2# (word64ToWord# a) (word64ToWord# b) of
+    (# a', b' #) ->
+     (# wordToWord64# a', wordToWord64# b' #)
+
+int2Word# :: Int64# -> Word64#
+int2Word# = GHC.Base.int64ToWord64#
+
+minusWord# :: Word64# -> Word64# -> Word64#
+minusWord# a b =
+  wordToWord64# (GHC.Base.minusWord# (word64ToWord# a) (word64ToWord# b))
+
+subWordC# :: Word64# -> Word64# -> (# Word64#, Int64# #)
+subWordC# a b =
+  case GHC.Base.subWordC# (word64ToWord# a) (word64ToWord# b) of
+    (# a', b' #) ->
+     (# wordToWord64# a', GHC.Base.intToInt64# b' #)
+
+not# :: Word64# -> Word64#
+not# = GHC.Base.not64#
+
+or# :: Word64# -> Word64# -> Word64#
+or# = GHC.Base.or64#
+
+xor# :: Word64# -> Word64# -> Word64#
+xor# = GHC.Base.xor64#
+
+and# :: Word64# -> Word64# -> Word64#
+and# = GHC.Base.and64#
+
+timesWord# :: Word64# -> Word64# -> Word64#
+timesWord# = GHC.Base.timesWord64#
+
+plusWord# :: Word64# -> Word64# -> Word64#
+plusWord# = GHC.Base.plusWord64#
+
+word2Int# :: Word64# -> Int64#
+word2Int# = GHC.Base.word64ToInt64#
+
+#endif
+
+#if MIN_VERSION_base(4,17,0)
+#define ONE (wordToWord64# 1##)
+#else
+#define ONE (1##)
+#endif
 
 data Int128 = Int128
   { int128Hi64 :: !Word64
@@ -210,10 +269,11 @@ compare128 :: Int128 -> Int128 -> Ordering
 compare128 (Int128 a1 a0) (Int128 b1 b0) =
   compare (int64OfWord64 a1) (int64OfWord64 b1) <> compare a0 b0
   where
+    int64OfWord64 (W64# w) = I64#
 #if MIN_VERSION_base(4,17,0)
-    int64OfWord64 (W64# (word64ToWord# -> w)) = I64# (intToInt64# (word2Int# w))
+      (word2Int# w)
 #else
-    int64OfWord64 (W64# w) = I64# (word2Int# w)
+      (word2Int# w)
 #endif
 
 -- -----------------------------------------------------------------------------
@@ -249,13 +309,8 @@ fromEnum128 (Int128 _ a0) = fromEnum a0
 
 {-# INLINABLE plus128 #-}
 plus128 :: Int128 -> Int128 -> Int128
-#if MIN_VERSION_base(4,17,0)
-plus128 (Int128 (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0))) (Int128 (W64# (word64ToWord# -> b1)) (W64# (word64ToWord# -> b0))) =
-  Int128 (W64# (wordToWord64# s1)) (W64# (wordToWord64# s0))
-#else
 plus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# s1) (W64# s0)
-#endif
   where
     !(# c1, s0 #) = plusWord2# a0 b0
     s1a = plusWord# a1 b1
@@ -263,26 +318,16 @@ plus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
 
 {-# INLINABLE minus128 #-}
 minus128 :: Int128 -> Int128 -> Int128
-#if MIN_VERSION_base(4,17,0)
-minus128 (Int128 (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0))) (Int128 (W64# (word64ToWord# -> b1)) (W64# (word64ToWord# -> b0))) =
-  Int128 (W64# (wordToWord64# d1)) (W64# (wordToWord64# d0))
-#else
 minus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# d1) (W64# d0)
-#endif
   where
     !(# d0, c1 #) = subWordC# a0 b0
     a1c = minusWord# a1 (int2Word# c1)
     d1 = minusWord# a1c b1
 
 times128 :: Int128 -> Int128 -> Int128
-#if MIN_VERSION_base(4,17,0)
-times128 (Int128 (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0))) (Int128 (W64# (word64ToWord# -> b1)) (W64# (word64ToWord# -> b0))) =
-  Int128 (W64# (wordToWord64# p1)) (W64# (wordToWord64# p0))
-#else
 times128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
   Int128 (W64# p1) (W64# p0)
-#endif
   where
     !(# c1, p0 #) = timesWord2# a0 b0
     p1a = timesWord# a1 b0
@@ -293,13 +338,8 @@ times128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
 {-# INLINABLE negate128 #-}
 negate128 :: Int128 -> Int128
 negate128 (Int128 (W64# a1) (W64# a0)) =
-#if MIN_VERSION_base(4,17,0)
-  case plusWord2# (not# (word64ToWord# a0)) 1## of
-    (# c, s #) -> Int128 (W64# (plusWord64# (not64# a1) (wordToWord64# c))) (W64# (wordToWord64# s))
-#else
-  case plusWord2# (not# a0) 1## of
+  case plusWord2# (not# a0) ONE of
     (# c, s #) -> Int128 (W64# (plusWord# (not# a1) c)) (W64# s)
-#endif
 
 {-# INLINABLE abs128 #-}
 abs128 :: Int128 -> Int128
@@ -328,27 +368,18 @@ fromInteger128 i =
 {-# INLINABLE and128 #-}
 and128 :: Int128 -> Int128 -> Int128
 and128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-#if MIN_VERSION_base(4,17,0)
-  Int128 (W64# (and64# a1 b1)) (W64# (and64# a0 b0))
-#else
   Int128 (W64# (and# a1 b1)) (W64# (and# a0 b0))
-
-#endif
 
 {-# INLINABLE or128 #-}
 or128 :: Int128 -> Int128 -> Int128
 or128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-#if MIN_VERSION_base(4,17,0)
-  Int128 (W64# (or64# a1 b1)) (W64# (or64# a0 b0))
-#else
   Int128 (W64# (or# a1 b1)) (W64# (or# a0 b0))
-#endif
 
 {-# INLINABLE xor128 #-}
 xor128 :: Int128 -> Int128 -> Int128
 xor128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
 #if MIN_VERSION_base(4,17,0)
-  Int128 (W64# (xor64# a1 b1)) (W64# (xor64# a0 b0))
+  Int128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
 #else
   Int128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
 #endif
