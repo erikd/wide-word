@@ -71,7 +71,7 @@ import Data.Hashable (Hashable,hashWithSalt)
 #if MIN_VERSION_base(4,17,0)
 import qualified GHC.Base
 #else
-import GHC.Base (int2Word#, subWordC#, plusWord2#, or#, minusWord#, stimesWord2#, word2Int#)
+import GHC.Base (int2Word#, subWordC#, plusWord2#, or#, minusWord#, timesWord2#, word2Int#, xor#, and#, not#, plusWord#, timesWord#)
 #endif
 
 #if MIN_VERSION_base(4,17,0)
@@ -269,12 +269,7 @@ compare128 :: Int128 -> Int128 -> Ordering
 compare128 (Int128 a1 a0) (Int128 b1 b0) =
   compare (int64OfWord64 a1) (int64OfWord64 b1) <> compare a0 b0
   where
-    int64OfWord64 (W64# w) = I64#
-#if MIN_VERSION_base(4,17,0)
-      (word2Int# w)
-#else
-      (word2Int# w)
-#endif
+    int64OfWord64 (W64# w) = I64# (word2Int# w)
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.
@@ -378,11 +373,7 @@ or128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
 {-# INLINABLE xor128 #-}
 xor128 :: Int128 -> Int128 -> Int128
 xor128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-#if MIN_VERSION_base(4,17,0)
   Int128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
-#else
-  Int128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
-#endif
 
 -- Probably not worth inlining this.
 shiftL128 :: Int128 -> Int -> Int128
