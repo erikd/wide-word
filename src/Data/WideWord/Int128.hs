@@ -64,12 +64,6 @@ import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#
 
 import Data.Hashable (Hashable,hashWithSalt)
 
-#if MIN_VERSION_base(4,17,0)
-import qualified GHC.Base
-#else
-import GHC.Base (int2Word#, subWordC#, plusWord2#, or#, minusWord#, timesWord2#, word2Int#, xor#, and#, not#, plusWord#, timesWord#)
-#endif
-
 import Data.WideWord.Compat
 
 #if MIN_VERSION_base(4,17,0)
