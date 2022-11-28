@@ -15,7 +15,7 @@ module Data.WideWord.Compat
   , minusWord#
   , subWordC#
   , not#
-  , eqWord#
+  , eqWordBool#
   , or#
   , and#
   , xor#
@@ -33,7 +33,8 @@ module Data.WideWord.Compat
 import qualified GHC.Base
 import GHC.Prim (Word64#, wordToWord64#, word64ToWord#, Int64#)
 #else
-import GHC.Base (quotRemWord2#, int2Word#, subWordC#, plusWord2#, or#, minusWord#, timesWord2#, word2Int#, xor#, and#, not#, plusWord#, timesWord#)
+import qualified GHC.Base
+import GHC.Base (Int#(..), Word#, quotRemWord2#, int2Word#, subWordC#, plusWord2#, or#, minusWord#, timesWord2#, word2Int#, xor#, and#, not#, plusWord#, timesWord#)
 #endif
 
 #if MIN_VERSION_base(4,17,0)
@@ -88,18 +89,24 @@ quotRemWord2# a b c =
     case GHC.Base.quotRemWord2# (word64ToWord# a) (word64ToWord# b) (word64ToWord# c) of
         (# x, y #) ->
             (# wordToWord64# x, wordToWord64# y #)
+#endif
 
-eqWord# :: Word64# -> Word64# -> Bool
-eqWord# a b = GHC.Base.isTrue# (GHC.Base.eqWord64# a b)
+eqWordBool#
+#if MIN_VERSION_base(4,17,0)
+  :: Word64# -> Word64# -> Bool
+eqWordBool# a b = GHC.Base.isTrue# (GHC.Base.eqWord64# a b)
+#else
+  :: Word# -> Word# -> Bool
+eqWordBool# a b = GHC.Base.isTrue# (GHC.Base.eqWord# a b)
 #endif
 
 compatWordLiteral#
 #if MIN_VERSION_base(4,17,0)
-    :: GHC.Base.Word# -> Word64#
+  :: GHC.Base.Word# -> Word64#
 compatWordLiteral# = wordToWord64#
 #else
-    :: Word# -> Word#
-compatWordLiteral# = id
+  :: Word# -> Word#
+compatWordLiteral# a = a
 #endif
 
 compatIntLiteral#
@@ -108,7 +115,7 @@ compatIntLiteral#
 compatIntLiteral# = GHC.Base.intToInt64#
 #else
     :: Int# -> Int#
-compatIntLiteral# = id
+compatIntLiteral# a = a
 #endif
 
 compatCaseOnWordLiteral#
@@ -117,7 +124,7 @@ compatCaseOnWordLiteral#
 compatCaseOnWordLiteral# = word64ToWord#
 #else
     :: Word# -> Word#
-compatCaseOnWordLiteral# = id
+compatCaseOnWordLiteral# a = a
 #endif
 
 compatCaseOnIntLiteral#
@@ -126,6 +133,6 @@ compatCaseOnIntLiteral#
 compatCaseOnIntLiteral# = GHC.Base.int64ToInt#
 #else
     :: Int# -> Int#
-compatCaseOnIntLiteral# = id
+compatCaseOnIntLiteral# a = a
 #endif
 
