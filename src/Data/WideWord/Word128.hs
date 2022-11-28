@@ -272,8 +272,8 @@ negate128 (Word128 (W64# a1) (W64# a0)) =
 {-# INLINABLE signum128 #-}
 signum128 :: Word128 -> Word128
 signum128 (Word128 (W64# a) (W64# b))
-  | a `eqWordBool#` compatWordLiteral# 0##
-  , b `eqWordBool#` compatWordLiteral# 0##
+  | isZeroWord# a
+  , isZeroWord# b
   = zeroWord128
   | otherwise = oneWord128
 

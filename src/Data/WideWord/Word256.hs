@@ -338,10 +338,10 @@ negate256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0)) =
 {-# INLINABLE signum256 #-}
 signum256 :: Word256 -> Word256
 signum256 (Word256 (W64# a) (W64# b) (W64# c) (W64# d))
-  | a `eqWordBool#` compatWordLiteral# 0##
-  , b `eqWordBool#` compatWordLiteral# 0##
-  , c `eqWordBool#` compatWordLiteral# 0##
-  , d `eqWordBool#` compatWordLiteral# 0##
+  | isZeroWord# a
+  , isZeroWord# b
+  , isZeroWord# c
+  , isZeroWord# d
   = zeroWord256
   | otherwise = oneWord256
 
