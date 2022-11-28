@@ -1,4 +1,3 @@
-{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -43,8 +42,7 @@ import Data.Semigroup ((<>))
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
-import GHC.Base (Int (..), and#, minusWord#, not#, or#, plusWord#, plusWord2#
-                , subWordC#, timesWord#, timesWord2#, xor#)
+import GHC.Base (Int (..))
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Generics
@@ -52,8 +50,7 @@ import GHC.Real ((%))
 import GHC.Word (Word64 (..), Word32)
 
 #if MIN_VERSION_base(4,17,0)
-import GHC.Prim
-import GHC.Base (timesWord64#)
+import Data.WideWord.Compat
 #endif
 
 #if WORD_SIZE_IN_BITS < 64
@@ -259,15 +256,9 @@ fromEnum256 (Word256 _ _ _ a0) = fromEnum a0
 
 {-# INLINABLE plus256 #-}
 plus256 :: Word256 -> Word256 -> Word256
-#if MIN_VERSION_base(4,17,0)
-plus256 (Word256 (W64# (word64ToWord# -> a3)) (W64# (word64ToWord# -> a2)) (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0)))
-        (Word256 (W64# (word64ToWord# -> b3)) (W64# (word64ToWord# -> b2)) (W64# (word64ToWord# -> b1)) (W64# (word64ToWord# -> b0))) =
-  Word256 (W64# (wordToWord64# s3)) (W64# (wordToWord64# s2)) (W64# (wordToWord64# s1)) (W64# (wordToWord64# s0))
-#else
 plus256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
         (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
   Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
-#endif
   where
     !(# c1, s0 #) = plusWord2# a0 b0
     !(# c2a, s1a #) = plusWord2# a1 b1
@@ -280,71 +271,31 @@ plus256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
 
 {-# INLINABLE minus256 #-}
 minus256 :: Word256 -> Word256 -> Word256
-#if MIN_VERSION_base(4,17,0)
-minus256 (Word256 (W64# (word64ToWord# -> a3)) (W64# (word64ToWord# -> a2)) (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0)))
-         (Word256 (W64# (word64ToWord# -> b3)) (W64# (word64ToWord# -> b2)) (W64# (word64ToWord# -> b1)) (W64# (word64ToWord# -> b0))) =
-  Word256 (W64# (wordToWord64# s3)) (W64# (wordToWord64# s2)) (W64# (wordToWord64# s1)) (W64# (wordToWord64# s0))
-#else
 minus256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
          (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
   Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
-#endif
   where
     !(# s0, v1 #) = subWordC# a0 b0
     !(# s1, v2 #) =
-      case v1 of
+      case compatCaseOnIntLiteral# v1 of
         0# -> subWordC# a1 b1
         _ ->
-          case a1 of
-            0## -> (# minusWord# 0xFFFFFFFFFFFFFFFF## b1, 1# #)
-            _ -> subWordC# (minusWord# a1 1##) b1
+          case compatCaseOnWordLiteral# a1 of
+            0## -> (# minusWord# (compatWordLiteral# 0xFFFFFFFFFFFFFFFF##) b1, (compatIntLiteral# 1#) #)
+            _ -> subWordC# (minusWord# a1 (compatWordLiteral# 1##)) b1
     !(# s2, v3 #) =
-      case v2 of
+      case compatCaseOnIntLiteral# v2 of
         0# -> subWordC# a2 b2
         _ ->
-          case a2 of
-            0## -> (# minusWord# 0xFFFFFFFFFFFFFFFF## b2, 1# #)
-            _ -> subWordC# (minusWord# a2 1##) b2
+          case compatCaseOnWordLiteral# a2 of
+            0## -> (# minusWord# (compatWordLiteral# 0xFFFFFFFFFFFFFFFF##) b2, (compatIntLiteral# 1#) #)
+            _ -> subWordC# (minusWord# a2 (compatWordLiteral# 1##)) b2
     !s3 =
-      case v3 of
+      case compatCaseOnIntLiteral# v3 of
         0# -> minusWord# a3 b3
-        _ -> minusWord# (minusWord# a3 1##) b3
+        _ -> minusWord# (minusWord# a3 (compatWordLiteral# 1##)) b3
 
 times256 :: Word256 -> Word256 -> Word256
-#if MIN_VERSION_base(4,17,0)
-times256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
-         (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# (wordToWord64# r3)) (W64# (wordToWord64# r2)) (W64# (wordToWord64# r1)) (W64# (wordToWord64# r0))
-  where
-    !(# c00, p00 #) = timesWord2# (word64ToWord# a0) (word64ToWord# b0)
-    !(# c01, p01 #) = timesWord2# (word64ToWord# a0) (word64ToWord# b1)
-    !(# c02, p02 #) = timesWord2# (word64ToWord# a0) (word64ToWord# b2)
-    !p03 = timesWord# (word64ToWord# a0) (word64ToWord# b3)
-    !(# c10, p10 #) = timesWord2# (word64ToWord# a1) (word64ToWord# b0)
-    !(# c11, p11 #) = timesWord2# (word64ToWord# a1) (word64ToWord# b1)
-    !p12 = timesWord# (word64ToWord# a1) (word64ToWord# b2)
-    !(# c20, p20 #) = timesWord2# (word64ToWord# a2) (word64ToWord# b0)
-    !p21 = timesWord# (word64ToWord# a2) (word64ToWord# b1)
-    !p30 = timesWord# (word64ToWord# a3) (word64ToWord# b0)
-    !r0 = p00
-    !c1 = c00
-    !(# c2x, r1a #) = plusWord2# p01 p10
-    !(# c2y, r1b #) = plusWord2# r1a c1
-    !(# c3w, c2 #) = plusWord2# c2x c2y
-    !r1 = r1b
-    !(# c3x, r2a #) = plusWord2# p11 p20
-    !(# c3y, r2b #) = plusWord2# p02 r2a
-    !(# c3z, r2c #) = plusWord2# r2b c2
-    !(# c3s, r2d #) = plusWord2# r2c c01
-    !(# c3t, r2e #) = plusWord2# r2d c10
-    !r2 = r2e
-    !r3 = p30 `plusWord#` p21 `plusWord#` p12 `plusWord#`
-         p03 `plusWord#` c3w `plusWord#` c3x `plusWord#`
-         c3y `plusWord#` c3z `plusWord#` c3s `plusWord#`
-         c3t `plusWord#` c02 `plusWord#` c11 `plusWord#`
-         c20
-
-#else
 times256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
          (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
   Word256 (W64# r3) (W64# r2) (W64# r1) (W64# r0)
@@ -376,34 +327,25 @@ times256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
          c3y `plusWord#` c3z `plusWord#` c3s `plusWord#`
          c3t `plusWord#` c02 `plusWord#` c11 `plusWord#`
          c20
-#endif
 
 {-# INLINABLE negate256 #-}
 negate256 :: Word256 -> Word256
-#if MIN_VERSION_base(4,17,0)
-negate256 (Word256 (W64# (word64ToWord# -> a3)) (W64# (word64ToWord# -> a2)) (W64# (word64ToWord# -> a1)) (W64# (word64ToWord# -> a0))) =
-  case plusWord2# (not# a0) 1## of
-    (# c1, s0 #) -> case plusWord2# (not# a1) c1 of
-      (# c2, s1 #) -> case plusWord2# (not# a2) c2 of
-        (# c3, s2 #) -> case plusWord# (not# a3) c3 of
-          s3 -> Word256 (W64# (wordToWord64# s3)) (W64# (wordToWord64# s2)) (W64# (wordToWord64# s1)) (W64# (wordToWord64# s0))
-#else
 negate256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) 1## of
+  case plusWord2# (not# a0) (compatWordLiteral# 1##) of
     (# c1, s0 #) -> case plusWord2# (not# a1) c1 of
       (# c2, s1 #) -> case plusWord2# (not# a2) c2 of
         (# c3, s2 #) -> case plusWord# (not# a3) c3 of
           s3 -> Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
-#endif
 
 {-# INLINABLE signum256 #-}
 signum256 :: Word256 -> Word256
-#if MIN_VERSION_base(4,17,0)
-signum256 (Word256 (W64# (word64ToWord# -> 0##)) (W64# (word64ToWord# -> 0##)) (W64# (word64ToWord# -> 0##)) (W64# (word64ToWord# -> 0##))) = zeroWord256
-#else
-signum256 (Word256 (W64# 0##) (W64# 0##) (W64# 0##) (W64# 0##)) = zeroWord256
-#endif
-signum256 _ = oneWord256
+signum256 (Word256 (W64# a) (W64# b) (W64# c) (W64# d))
+  | a `eqWord#` compatWordLiteral# 0##
+  , b `eqWord#` compatWordLiteral# 0##
+  , c `eqWord#` compatWordLiteral# 0##
+  , d `eqWord#` compatWordLiteral# 0##
+  = zeroWord256
+  | otherwise = oneWord256
 
 fromInteger256 :: Integer -> Word256
 fromInteger256 i = Word256
@@ -419,38 +361,22 @@ fromInteger256 i = Word256
 and256 :: Word256 -> Word256 -> Word256
 and256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
        (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-#if MIN_VERSION_base(4,17,0)
-  Word256 (W64# (and64# a3 b3)) (W64# (and64# a2 b2))
-          (W64# (and64# a1 b1)) (W64# (and64# a0 b0))
-#else
   Word256 (W64# (and# a3 b3)) (W64# (and# a2 b2))
           (W64# (and# a1 b1)) (W64# (and# a0 b0))
-
-#endif
 
 {-# INLINABLE or256 #-}
 or256 :: Word256 -> Word256 -> Word256
 or256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
       (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-#if MIN_VERSION_base(4,17,0)
-  Word256 (W64# (or64# a3 b3)) (W64# (or64# a2 b2))
-          (W64# (or64# a1 b1)) (W64# (or64# a0 b0))
-#else
   Word256 (W64# (or# a3 b3)) (W64# (or# a2 b2))
           (W64# (or# a1 b1)) (W64# (or# a0 b0))
-#endif
 
 {-# INLINABLE xor256 #-}
 xor256 :: Word256 -> Word256 -> Word256
 xor256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
        (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-#if MIN_VERSION_base(4,17,0)
-  Word256 (W64# (xor64# a3 b3)) (W64# (xor64# a2 b2))
-          (W64# (xor64# a1 b1)) (W64# (xor64# a0 b0))
-#else
   Word256 (W64# (xor# a3 b3)) (W64# (xor# a2 b2))
           (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
-#endif
 
 {-# INLINABLE complement256 #-}
 complement256 :: Word256 -> Word256

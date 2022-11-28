@@ -66,12 +66,6 @@ import Data.Hashable (Hashable,hashWithSalt)
 
 import Data.WideWord.Compat
 
-#if MIN_VERSION_base(4,17,0)
-#define ONE (wordToWord64# 1##)
-#else
-#define ONE (1##)
-#endif
-
 data Int128 = Int128
   { int128Hi64 :: !Word64
   , int128Lo64 :: !Word64
@@ -276,7 +270,7 @@ times128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
 {-# INLINABLE negate128 #-}
 negate128 :: Int128 -> Int128
 negate128 (Int128 (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) ONE of
+  case plusWord2# (not# a0) (compatWordLiteral# 1##) of
     (# c, s #) -> Int128 (W64# (plusWord# (not# a1) c)) (W64# s)
 
 {-# INLINABLE abs128 #-}
