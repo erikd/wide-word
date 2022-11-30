@@ -184,23 +184,43 @@ instance Prim Word128 where
 -- -----------------------------------------------------------------------------
 -- Rewrite rules.
 
-#if __GLASGOW_HASKELL__ >= 904
-{-# INLINE[1] fromIntegral #-}
-#endif
-
 {-# RULES
 "fromIntegral :: Word128 -> Word128" fromIntegral = id :: Word128 -> Word128
 
-"fromIntegral :: Int -> Word128"     fromIntegral = Word128 0 . (fromIntegral :: Int -> Word64)
-"fromIntegral :: Word -> Word128"    fromIntegral = Word128 0 . (fromIntegral :: Word -> Word64)
-"fromIntegral :: Word32 -> Word128"  fromIntegral = Word128 0 . (fromIntegral :: Word32 -> Word64)
+"fromIntegral :: Int -> Word128"     fromIntegral = fromInt
+"fromIntegral :: Word -> Word128"    fromIntegral = fromWord
+"fromIntegral :: Word32 -> Word128"  fromIntegral = fromWord32
 "fromIntegral :: Word64 -> Word128"  fromIntegral = Word128 0
 
-"fromIntegral :: Word128 -> Int"     fromIntegral = \(Word128 _ w) -> fromIntegral w :: Int
-"fromIntegral :: Word128 -> Word"    fromIntegral = \(Word128 _ w) -> fromIntegral w :: Word
-"fromIntegral :: Word128 -> Word32"  fromIntegral = \(Word128 _ w) -> fromIntegral w :: Word32
+"fromIntegral :: Word128 -> Int"     fromIntegral = toInt
+"fromIntegral :: Word128 -> Word"    fromIntegral = toWord
+"fromIntegral :: Word128 -> Word32"  fromIntegral = toWord32
 "fromIntegral :: Word128 -> Word64"  fromIntegral = \(Word128 _ w) -> w
   #-}
+
+{-# INLINE fromInt #-}
+fromInt :: Int -> Word128
+fromInt = Word128 0 . fromIntegral
+
+{-# INLINE fromWord #-}
+fromWord :: Word -> Word128
+fromWord = Word128 0 . fromIntegral
+
+{-# INLINE fromWord32 #-}
+fromWord32 :: Word32 -> Word128
+fromWord32 = Word128 0 . fromIntegral
+
+{-# INLINE toInt #-}
+toInt :: Word128 -> Int
+toInt (Word128 _ w) = fromIntegral w
+
+{-# INLINE toWord #-}
+toWord :: Word128 -> Word
+toWord (Word128 _ w) = fromIntegral w
+
+{-# INLINE toWord32 #-}
+toWord32 :: Word128 -> Word32
+toWord32 (Word128 _ w) = fromIntegral w
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.

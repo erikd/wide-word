@@ -196,14 +196,40 @@ instance Prim Int128 where
 -- Rewrite rules.
 
 {-# RULES
-"fromIntegral :: Int128 -> Int128" fromIntegral = id :: Int128 -> Int128
-"fromIntegral :: Word128 -> Int128" fromIntegral = \(Word128 a1 a0) -> Int128 a1 a0
-"fromIntegral :: Int128 -> Word128" fromIntegral = \(Int128 a1 a0) -> Word128 a1 a0
-
-"fromIntegral :: Word -> Int128"    fromIntegral = Int128 0 . (fromIntegral :: Word -> Word64)
-"fromIntegral :: Word32 -> Int128"  fromIntegral = Int128 0 . (fromIntegral :: Word32 -> Word64)
+"fromIntegral :: Int -> Int128"     fromIntegral = fromInt
+"fromIntegral :: Word -> Int128"    fromIntegral = fromWord
+"fromIntegral :: Word32 -> Int128"  fromIntegral = fromWord32
 "fromIntegral :: Word64 -> Int128"  fromIntegral = Int128 0
+
+"fromIntegral :: Int128 -> Int"     fromIntegral = toInt
+"fromIntegral :: Int128 -> Word"    fromIntegral = toWord
+"fromIntegral :: Int128 -> Word32"  fromIntegral = toWord32
+"fromIntegral :: Int128 -> Word64"  fromIntegral = \(Int128 _ w) -> w
   #-}
+
+{-# INLINE fromInt #-}
+fromInt :: Int -> Int128
+fromInt = Int128 0 . fromIntegral
+
+{-# INLINE fromWord #-}
+fromWord :: Word -> Int128
+fromWord = Int128 0 . fromIntegral
+
+{-# INLINE fromWord32 #-}
+fromWord32 :: Word32 -> Int128
+fromWord32 = Int128 0 . fromIntegral
+
+{-# INLINE toInt #-}
+toInt :: Int128 -> Int
+toInt (Int128 _ w) = fromIntegral w
+
+{-# INLINE toWord #-}
+toWord :: Int128 -> Word
+toWord (Int128 _ w) = fromIntegral w
+
+{-# INLINE toWord32 #-}
+toWord32 :: Int128 -> Word32
+toWord32 (Int128 _ w) = fromIntegral w
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Ord` instance.
