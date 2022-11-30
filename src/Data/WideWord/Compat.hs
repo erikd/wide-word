@@ -98,6 +98,7 @@ isZeroWord# a = GHC.Base.isTrue# (GHC.Base.eqWord# (word64ToWord# a) 0##)
 #else
     :: Word# -> Bool
 isZeroWord# 0## = True
+isZeroWord# _ = False
 #endif
 
 compatWordLiteral#
