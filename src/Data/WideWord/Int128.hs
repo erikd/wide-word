@@ -23,8 +23,6 @@
 ---- "modulo 2^128" result as one would expect from a fixed width unsigned word.
 -------------------------------------------------------------------------------
 
-#include <MachDeps.h>
-
 module Data.WideWord.Int128
   ( Int128 (..)
   , byteSwapInt128
@@ -52,19 +50,14 @@ import GHC.Base (Int (..))
 import GHC.Enum (predError, succError)
 import GHC.Exts ((+#), (*#), State#, Int#, Addr#, ByteArray#, MutableByteArray#)
 import GHC.Generics
-import GHC.Int (Int64 (..))
 import GHC.Real ((%))
-import GHC.Word (Word64 (..), Word32, byteSwap64)
-
-#if WORD_SIZE_IN_BITS < 64
-import GHC.IntWord64
-#endif
+import GHC.Word (Word32, Word64, byteSwap64)
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
 import Data.Hashable (Hashable,hashWithSalt)
 
-import Data.WideWord.Compat
+import Data.WideWord.Word64
 
 #if MIN_VERSION_base(4,17,0)
 #define ONE (wordToWord64# 1##)
@@ -235,28 +228,26 @@ toWord32 (Int128 _ w) = fromIntegral w
 -- Functions for `Ord` instance.
 
 compare128 :: Int128 -> Int128 -> Ordering
-compare128 (Int128 a1 a0) (Int128 b1 b0) =
-  compare (int64OfWord64 a1) (int64OfWord64 b1) <> compare a0 b0
-  where
-    int64OfWord64 (W64# w) = I64# (word2Int# w)
+compare128 a b = compare (toInteger128 a) (toInteger128 b)
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.
 
-
 succ128 :: Int128 -> Int128
 succ128 (Int128 a1 a0)
-  | a0 == maxBound = if a1 == 0x7fffffffffffffff
-                     then succError "Int128"
-                     else Int128 (a1 + 1) 0
+  | a0 == maxBound =
+      if a1 == 0x7fffffffffffffff
+        then succError "Int128"
+        else Int128 (a1 + 1) 0
   | otherwise = Int128 a1 (a0 + 1)
 
 
 pred128 :: Int128 -> Int128
 pred128 (Int128 a1 a0)
-  | a0 == 0 = if a1 == 0x8000000000000000
-              then predError "Int128"
-              else Int128 (a1 - 1) maxBound
+  | a0 == 0 =
+      if a1 == 0x8000000000000000
+        then predError "Int128"
+        else Int128 (a1 - 1) maxBound
   | otherwise = Int128 a1 (a0 - 1)
 
 
@@ -273,37 +264,37 @@ fromEnum128 (Int128 _ a0) = fromEnum a0
 
 {-# INLINABLE plus128 #-}
 plus128 :: Int128 -> Int128 -> Int128
-plus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# s1) (W64# s0)
+plus128 (Int128 a1 a0) (Int128 b1 b0) =
+    Int128 s1 s0
   where
-    !(# c1, s0 #) = plusWord2# a0 b0
-    s1a = plusWord# a1 b1
-    s1 = plusWord# c1 s1a
+    !(c1, s0) = plusCarrySum a0 b0
+    s1a = a1 + b1
+    s1 = c1 + s1a
 
 {-# INLINABLE minus128 #-}
 minus128 :: Int128 -> Int128 -> Int128
-minus128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# d1) (W64# d0)
+minus128 (Int128 a1 a0) (Int128 b1 b0) =
+    Int128 d1 d0
   where
-    !(# d0, c1 #) = subWordC# a0 b0
-    a1c = minusWord# a1 (int2Word# c1)
-    d1 = minusWord# a1c b1
+    !(c1, d0) = subCarryDiff a0 b0
+    a1c = a1 - c1
+    d1 = a1c - b1
 
 times128 :: Int128 -> Int128 -> Int128
-times128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# p1) (W64# p0)
+times128 (Int128 a1 a0) (Int128 b1 b0) =
+  Int128 p1 p0
   where
-    !(# c1, p0 #) = timesWord2# a0 b0
-    p1a = timesWord# a1 b0
-    p1b = timesWord# a0 b1
-    p1c = plusWord# p1a p1b
-    p1 = plusWord# p1c c1
+    !(c1, p0) = timesCarryProd a0 b0
+    p1a = a1 * b0
+    p1b = a0 * b1
+    p1c = p1a + p1b
+    p1 = p1c + c1
 
 {-# INLINABLE negate128 #-}
 negate128 :: Int128 -> Int128
-negate128 (Int128 (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) (compatWordLiteral# 1##) of
-    (# c, s #) -> Int128 (W64# (plusWord# (not# a1) c)) (W64# s)
+negate128 (Int128 a1 a0) =
+  case plusCarrySum (complement a0) 1 of
+    (c, s) -> Int128 (complement a1 + c) s
 
 {-# INLINABLE abs128 #-}
 abs128 :: Int128 -> Int128
@@ -331,18 +322,18 @@ fromInteger128 i =
 
 {-# INLINABLE and128 #-}
 and128 :: Int128 -> Int128 -> Int128
-and128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# (and# a1 b1)) (W64# (and# a0 b0))
+and128 (Int128 a1 a0) (Int128 b1 b0) =
+  Int128 (a1 .&. b1) (a0 .&. b0)
 
 {-# INLINABLE or128 #-}
 or128 :: Int128 -> Int128 -> Int128
-or128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# (or# a1 b1)) (W64# (or# a0 b0))
+or128 (Int128 a1 a0) (Int128 b1 b0) =
+  Int128 (a1 .|. b1) (a0 .|. b0)
 
 {-# INLINABLE xor128 #-}
 xor128 :: Int128 -> Int128 -> Int128
-xor128 (Int128 (W64# a1) (W64# a0)) (Int128 (W64# b1) (W64# b0)) =
-  Int128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+xor128 (Int128 a1 a0) (Int128 b1 b0) =
+  Int128 (xor a1 b1) (xor a0 b0)
 
 -- Probably not worth inlining this.
 shiftL128 :: Int128 -> Int -> Int128
@@ -353,10 +344,7 @@ shiftL128 w@(Int128 a1 a0) s
   | s == 64 = Int128 a0 0
   | s > 64 = Int128 (a0 `shiftL` (s - 64)) 0
   | otherwise =
-      Int128 s1 s0
-      where
-        s0 = a0 `shiftL` s
-        s1 = a1 `shiftL` s + a0 `shiftR` (64 - s)
+      Int128 (a1 `shiftL` s + a0 `shiftR` (64 - s)) (a0 `shiftL` s)
 
 -- Probably not worth inlining this.
 shiftR128 :: Int128 -> Int -> Int128
@@ -367,10 +355,7 @@ shiftR128 i@(Int128 a1 a0) s
   | s >= 128 = zeroInt128
   | s == 64 = Int128 0 a1
   | s > 64 = Int128 0 (a1 `shiftR` (s - 64))
-  | otherwise = Int128 s1 s0
-      where
-        s1 = a1 `shiftR` s
-        s0 = a0 `shiftR` s + a1 `shiftL` (64 - s)
+  | otherwise = Int128 (a1 `shiftR` s) (a0 `shiftR` s + a1 `shiftL` (64 - s))
 
 rotateL128 :: Int128 -> Int -> Int128
 rotateL128 w@(Int128 a1 a0) r
@@ -380,10 +365,7 @@ rotateL128 w@(Int128 a1 a0) r
   | r == 64 = Int128 a0 a1
   | r > 64 = rotateL128 (Int128 a0 a1) (r `mod` 64)
   | otherwise =
-      Int128 s1 s0
-      where
-        s0 = a0 `shiftL` r + a1 `shiftR` (64 - r)
-        s1 = a1 `shiftL` r + a0 `shiftR` (64 - r)
+      Int128 (a1 `shiftL` r + a0 `shiftR` (64 - r)) (a0 `shiftL` r + a1 `shiftR` (64 - r))
 
 rotateR128 :: Int128 -> Int -> Int128
 rotateR128 w@(Int128 a1 a0) r
@@ -393,10 +375,7 @@ rotateR128 w@(Int128 a1 a0) r
   | r == 64 = Int128 a0 a1
   | r > 64 = rotateR128 (Int128 a0 a1) (r `mod` 64)
   | otherwise =
-      Int128 s1 s0
-      where
-        s0 = a0 `shiftR` r + a1 `shiftL` (64 - r)
-        s1 = a1 `shiftR` r + a0 `shiftL` (64 - r)
+      Int128 (a1 `shiftR` r + a0 `shiftL` (64 - r)) (a0 `shiftR` r + a1 `shiftL` (64 - r))
 
 testBit128 :: Int128 -> Int -> Bool
 testBit128 (Int128 a1 a0) i
