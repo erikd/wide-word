@@ -5,11 +5,12 @@ import Data.WideWord
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Classes
 import Data.Semiring hiding ((+),(*))
-import Data.Proxy (Proxy(Proxy))
+import Data.Proxy (Proxy (Proxy))
 import Data.Bits
 import Foreign.Storable
 import Data.Primitive.Types (Prim)
 import Data.Maybe (catMaybes)
+import Data.Word (Word64)
 
 #if ! MIN_VERSION_base (4,11,0)
 import Data.Semigroup
@@ -21,38 +22,41 @@ main = lawsCheckMany allPropsApplied
 allPropsApplied :: [(String, [Laws])]
 allPropsApplied =
   [ ("Int128", allLaws (Proxy :: Proxy Int128))
+  , ("Word64", allLaws (Proxy :: Proxy Word64))
   , ("Word128", allLaws (Proxy :: Proxy Word128))
   , ("Word256", allLaws (Proxy :: Proxy Word256))
   ]
 
-allLaws ::
-  ( Arbitrary a
-  , Bits a
-  , Bounded a
-  , Enum a
-  , Eq a
-  , FiniteBits a
-  , Integral a
-  , Ord a
-  , Prim a
-  , Read a
-  , Semiring a
-  , Semigroup a
-  , Show a
-  , Storable a
-  ) => Proxy a -> [Laws]
-allLaws p = map ($ p)
-  [ bitsLaws
-  , boundedEnumLaws
-  , eqLaws
-  , integralLaws
-  , ordLaws
-  , semiringLaws
-  , semigroupLaws
-  , storableLaws
-  , primLaws
-  , numLaws
-  ]
+allLaws
+  :: ( Arbitrary a
+     , Bits a
+     , Bounded a
+     , Enum a
+     , Eq a
+     , FiniteBits a
+     , Integral a
+     , Ord a
+     , Prim a
+     , Read a
+     , Semiring a
+     , Semigroup a
+     , Show a
+     , Storable a
+     )
+  => Proxy a -> [Laws]
+allLaws p =
+  map ($ p)
+    [ bitsLaws
+    , boundedEnumLaws
+    , eqLaws
+    , integralLaws
+    , ordLaws
+    , semiringLaws
+    , semigroupLaws
+    , storableLaws
+    , primLaws
+    , numLaws
+    ]
 
 instance Arbitrary Word128 where
   arbitrary =
@@ -106,8 +110,12 @@ instance Semiring Int128 where
 instance Semigroup Word128 where
   (<>) = (+)
 
+instance Semigroup Word64 where
+  (<>) = (+)
+
 instance Semigroup Word256 where
   (<>) = (+)
 
 instance Semigroup Int128 where
   (<>) = (+)
+

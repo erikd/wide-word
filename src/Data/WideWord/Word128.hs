@@ -39,6 +39,7 @@ import Data.Ix (Ix)
 #if ! MIN_VERSION_base(4,11,0)
 import Data.Semigroup ((<>))
 #endif
+import Data.WideWord.Word64
 
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
@@ -46,15 +47,10 @@ import Foreign.Storable (Storable (..))
 import GHC.Base (Int (..))
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
-import GHC.Generics
+import GHC.Generics (Generic)
 import GHC.Real ((%), divZeroError)
-import GHC.Word (Word64 (..), Word32, byteSwap64)
+import GHC.Word (Word32, Word64, byteSwap64)
 
-#if WORD_SIZE_IN_BITS < 64
-import GHC.IntWord64
-#endif
-
-import Data.WideWord.Compat
 import Numeric (showHex)
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
@@ -138,6 +134,7 @@ instance FiniteBits Word128 where
 instance Real Word128 where
   toRational x = toInteger128 x % 1
 
+-- For unsigned values, quotRem is the same as divMod.
 instance Integral Word128 where
   quot n d = fst (quotRem128 n d)
   rem n d = snd (quotRem128 n d)
@@ -261,42 +258,40 @@ fromEnum128 (Word128 _ a0) = fromEnum a0
 
 {-# INLINABLE plus128 #-}
 plus128 :: Word128 -> Word128 -> Word128
-plus128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# s1) (W64# s0)
+plus128 (Word128 a1 a0) (Word128 b1 b0) =
+    Word128 s1 s0
   where
-    !(# c1, s0 #) = plusWord2# a0 b0
-    s1a = plusWord# a1 b1
-    s1 = plusWord# c1 s1a
+    !(c1, s0) = plusCarrySum a0 b0
+    !s1 = a1 + b1 + c1
 
 {-# INLINABLE minus128 #-}
 minus128 :: Word128 -> Word128 -> Word128
-minus128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# d1) (W64# d0)
+minus128 (Word128 a1 a0) (Word128 b1 b0) =
+    Word128 d1 d0
   where
-    !(# d0, c1 #) = subWordC# a0 b0
-    a1c = minusWord# a1 (int2Word# c1)
-    d1 = minusWord# a1c b1
+    !(c1, d0) = subCarryDiff a0 b0
+    !d1 = a1 - c1 - b1
 
 times128 :: Word128 -> Word128 -> Word128
-times128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# p1) (W64# p0)
+times128 (Word128 a1 a0) (Word128 b1 b0) =
+    Word128 p1 p0
   where
-    !(# c1, p0 #) = timesWord2# a0 b0
-    p1a = timesWord# a1 b0
-    p1b = timesWord# a0 b1
-    p1c = plusWord# p1a p1b
-    p1 = plusWord# p1c c1
+    !(c1, p0) = timesCarryProd a0 b0
+    !p1a = a1 * b0
+    !p1b = a0 * b1
+    !p1c = p1a + p1b
+    !p1 = p1c + c1
 
 {-# INLINABLE negate128 #-}
 negate128 :: Word128 -> Word128
-negate128 (Word128 (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) (compatWordLiteral# 1##) of
-    (# c, s #) -> Word128 (W64# (plusWord# (not# a1) c)) (W64# s)
+negate128 (Word128 a1 a0) =
+  case plusCarrySum (complement a0) 1 of
+    (c, s) -> Word128 (complement a1 + c) s
 
 {-# INLINABLE signum128 #-}
 signum128 :: Word128 -> Word128
-signum128 (Word128 (W64# a) (W64# b)) =
-  if isZeroWord# a && isZeroWord# b
+signum128 (Word128 a b) =
+  if a == 0 && b == 0
     then zeroWord128
     else oneWord128
 
@@ -309,18 +304,15 @@ fromInteger128 i =
 
 {-# INLINABLE and128 #-}
 and128 :: Word128 -> Word128 -> Word128
-and128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# (and# a1 b1)) (W64# (and# a0 b0))
+and128 (Word128 a1 a0) (Word128 b1 b0) = Word128 (a1 .&. b1) (a0 .&. b0)
 
 {-# INLINABLE or128 #-}
 or128 :: Word128 -> Word128 -> Word128
-or128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# (or# a1 b1)) (W64# (or# a0 b0))
+or128 (Word128 a1 a0) (Word128 b1 b0) = Word128 (a1 .|. b1) (a0 .|. b0)
 
 {-# INLINABLE xor128 #-}
 xor128 :: Word128 -> Word128 -> Word128
-xor128 (Word128 (W64# a1) (W64# a0)) (Word128 (W64# b1) (W64# b0)) =
-  Word128 (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+xor128 (Word128 a1 a0) (Word128 b1 b0) = Word128 (xor a1 b1) (xor a0 b0)
 
 {-# INLINABLE complement128 #-}
 complement128 :: Word128 -> Word128
@@ -356,8 +348,8 @@ shiftR128 w@(Word128 a1 a0) s
 
 rotateL128 :: Word128 -> Int -> Word128
 rotateL128 w@(Word128 a1 a0) r
-  | r < 0 = zeroWord128
   | r == 0 = w
+  | r < 0 = zeroWord128
   | r >= 128 = rotateL128 w (r `mod` 128)
   | r == 64 = Word128 a0 a1
   | r > 64 = rotateL128 (Word128 a0 a1) (r `mod` 64)
@@ -369,8 +361,8 @@ rotateL128 w@(Word128 a1 a0) r
 
 rotateR128 :: Word128 -> Int -> Word128
 rotateR128 w@(Word128 a1 a0) r
-  | r < 0 = rotateR128 w (128 - (abs r `mod` 128))
   | r == 0 = w
+  | r < 0 = rotateR128 w (128 - (abs r `mod` 128))
   | r >= 128 = rotateR128 w (r `mod` 128)
   | r == 64 = Word128 a0 a1
   | r > 64 = rotateR128 (Word128 a0 a1) (r `mod` 64)
@@ -442,30 +434,24 @@ quotRemFour num@(Word128 n1 _) den@(Word128 d1 _)
 
 {-# INLINE halfTimes128 #-}
 halfTimes128 :: Word128 -> Word64 -> Word128
-halfTimes128 (Word128 (W64# a1) (W64# a0)) (W64# b0) =
-  Word128 (W64# p1) (W64# p0)
+halfTimes128 (Word128 a1 a0) b0 =
+  Word128 p1 p0
   where
-    !(# c1, p0 #) = timesWord2# a0 b0
-    p1a = timesWord# a1 b0
-    p1 = plusWord# p1a c1
+    !(c1, p0) = timesCarryProd a0 b0
+    p1a = a1 * b0
+    p1 = p1a + c1
 
 {-# INLINE quotRemThree #-}
 quotRemThree :: Word128 -> Word64 -> (Word128, Word128)
 quotRemThree num@(Word128 n1 n0) den
   | den == 0 = divZeroError
   | den == 1 = (num, zeroWord128)
-  | n1 < den = case quotRemWord64 n1 n0 den of
+  | n1 < den = case quotRem2Word64 n1 n0 den of
                 (q, r) -> (Word128 0 q, Word128 0 r)
   | otherwise =
       case quotRem n1 den of
-        (q1, r1) -> case quotRemWord64 r1 n0 den of
-                      (q0, r0) -> (Word128 q1 q0, Word128 0 r0)
-
-{-# INLINE quotRemWord64 #-}
-quotRemWord64 :: Word64 -> Word64 -> Word64 -> (Word64, Word64)
-quotRemWord64 (W64# n1) (W64# n0) (W64# d) =
-  case quotRemWord2# n1 n0 d of
-    (# q, r #) -> (W64# q, W64# r)
+        (q1, r1) -> case quotRem2Word64 r1 n0 den of
+             (q0, r0) -> (Word128 q1 q0, Word128 0 r0)
 
 {-# INLINE quotRemTwo #-}
 quotRemTwo :: Word64 -> Word64 -> (Word128, Word128)

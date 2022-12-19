@@ -35,9 +35,10 @@ library
   other-extensions:   StrictData
 
   exposed-modules:     Data.WideWord
+                       Data.WideWord.Int128
+                       Data.WideWord.Word64
                        Data.WideWord.Word128
                        Data.WideWord.Word256
-                       Data.WideWord.Int128
 
   other-modules:       Data.WideWord.Compat
 
@@ -58,6 +59,7 @@ test-suite test
 
   other-modules:      Test.Data.WideWord.Gen
                       Test.Data.WideWord.Int128
+                      Test.Data.WideWord.Word64
                       Test.Data.WideWord.Word128
 
   build-depends:       base

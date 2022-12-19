@@ -10,8 +10,10 @@ import           Control.Monad (unless)
 import           Data.Bifunctor (first)
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
-import           Data.Primitive.PrimArray
-import           Data.Primitive.Ptr
+import           Data.Int (Int32)
+import           Data.Primitive.PrimArray (primArrayFromList, primArrayToList, readPrimArray,
+                   setPrimArray, unsafeFreezePrimArray, unsafeThawPrimArray, writePrimArray)
+import           Data.Primitive.Ptr (readOffPtr, writeOffPtr)
 import           Data.Word (Word8, Word64, byteSwap64)
 import           Data.WideWord
 
@@ -23,7 +25,7 @@ import qualified Hedgehog as H
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 
-import Test.Data.WideWord.Gen
+import           Test.Data.WideWord.Gen
 
 
 -- Set the number of times to run each property test here.
@@ -107,7 +109,7 @@ tryEvaluate x = do
 prop_toEnum_fromEnum :: Property
 prop_toEnum_fromEnum =
   propertyCount $ do
-    a0 <- H.forAll genWord32
+    a0 <- H.forAll $ Gen.integral (Range.linear 0 (maxBound :: Int32))
     let w128 = Word128 0 (fromIntegral a0)
         e128 = fromEnum w128
     toInteger e128 === toInteger a0
@@ -353,7 +355,6 @@ prop_readOffPtr_writeOffPtr =
                     writeOffPtr ptr 1 b128
                     (,) <$> readOffPtr ptr 0 <*> readOffPtr ptr 1
     (ar, br) === (a128, b128)
-
 
 -- -----------------------------------------------------------------------------
 

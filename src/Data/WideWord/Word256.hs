@@ -22,8 +22,6 @@
 ---- "modulo 2^256" result as one would expect from a fixed width unsigned word.
 -------------------------------------------------------------------------------
 
-#include <MachDeps.h>
-
 module Data.WideWord.Word256
   ( Word256 (..)
   , showHexWord256
@@ -45,20 +43,18 @@ import Foreign.Storable (Storable (..))
 import GHC.Base (Int (..))
 import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
-import GHC.Generics
+import GHC.Generics (Generic)
 import GHC.Real ((%))
-import GHC.Word (Word64 (..), Word32)
+import GHC.Word (Word32, Word64)
 
-import Data.WideWord.Compat
-
-#if WORD_SIZE_IN_BITS < 64
-import GHC.IntWord64
-#endif
+import Data.WideWord.Word64
 
 import Numeric (showHex)
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 import Data.Hashable (Hashable,hashWithSalt)
+
+{- HLINT ignore "Use guards" -}
 
 data Word256 = Word256
   { word256hi :: !Word64
@@ -74,11 +70,12 @@ instance Hashable Word256 where
 
 showHexWord256 :: Word256 -> String
 showHexWord256 (Word256 a3 a2 a1 a0)
-  | a3 == 0 = if a2 == 0
-      then if a1 == 0
-        then showHex a0 ""
-        else showHex a1 zeros0 ++ showHex a0 ""
-      else showHex a2 zeros1 ++ showHex a1 zeros0 ++ showHex a0 ""
+  | a3 == 0 =
+      if a2 == 0
+        then if a1 == 0
+          then showHex a0 ""
+          else showHex a1 zeros0 ++ showHex a0 ""
+        else showHex a2 zeros1 ++ showHex a1 zeros0 ++ showHex a0 ""
   | otherwise =
          showHex a3 zeros2 ++ showHex a2 zeros1
       ++ showHex a1 zeros0 ++ showHex a0 ""
@@ -147,6 +144,7 @@ instance FiniteBits Word256 where
 instance Real Word256 where
   toRational x = toInteger256 x % 1
 
+-- For unsigned values, quotRem is the same as divMod.
 instance Integral Word256 where
   quot n d = fst (quotRem256 n d)
   rem n d = snd (quotRem256 n d)
@@ -243,25 +241,27 @@ compare256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
 
 succ256 :: Word256 -> Word256
 succ256 (Word256 a3 a2 a1 a0)
-  | a0 == maxBound = if a1 == maxBound
-      then if a2 == maxBound
-        then if a3 == maxBound
-          then succError "Word256"
-          else Word256 (a3 + 1) 0 0 0
-        else Word256 a3 (a2 + 1) 0 0
-      else Word256 a3 a2 (a1 + 1) 0
+  | a0 == maxBound =
+      if a1 == maxBound
+        then if a2 == maxBound
+          then if a3 == maxBound
+            then succError "Word256"
+            else Word256 (a3 + 1) 0 0 0
+          else Word256 a3 (a2 + 1) 0 0
+        else Word256 a3 a2 (a1 + 1) 0
   | otherwise = Word256 a3 a2 a1 (a0 + 1)
 
 
 pred256 :: Word256 -> Word256
 pred256 (Word256 a3 a2 a1 a0)
-  | a0 == 0 = if a1 == 0
-      then if a2 == 0
-        then if a3 == 0
-          then predError "Word256"
-          else Word256 (a3 - 1) maxBound maxBound maxBound
-        else Word256 a3 (a2 - 1) maxBound maxBound
-      else Word256 a3 a2 (a1 - 1) maxBound
+  | a0 == 0 =
+      if a1 == 0
+        then if a2 == 0
+          then if a3 == 0
+            then predError "Word256"
+            else Word256 (a3 - 1) maxBound maxBound maxBound
+          else Word256 a3 (a2 - 1) maxBound maxBound
+        else Word256 a3 a2 (a1 - 1) maxBound
   | otherwise = Word256 a3 a2 a1 (a0 - 1)
 
 
@@ -278,133 +278,114 @@ fromEnum256 (Word256 _ _ _ a0) = fromEnum a0
 
 {-# INLINABLE plus256 #-}
 plus256 :: Word256 -> Word256 -> Word256
-plus256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
-        (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
+plus256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
+    Word256 s3 s2 s1 s0
   where
-    !(# c1, s0 #) = plusWord2# a0 b0
-    !(# c2a, s1a #) = plusWord2# a1 b1
-    !(# c2b, s1 #) = plusWord2# s1a c1
-    c2 = plusWord# c2a c2b
-    !(# c3a, s2a #) = plusWord2# a2 b2
-    !(# c3b, s2 #) = plusWord2# s2a c2
-    c3 = plusWord# c3a c3b
-    s3 = plusWord# a3 (plusWord# b3 c3)
+    !(c1, s0) = plusCarrySum a0 b0
+    !(c2a, s1a) = plusCarrySum a1 b1
+    !(c2b, s1) = plusCarrySum s1a c1
+    !c2 = c2a + c2b
+    !(c3a, s2a) = plusCarrySum a2 b2
+    !(c3b, s2) = plusCarrySum s2a c2
+    !c3 = c3a + c3b
+    !s3 = a3 + b3 + c3
 
 {-# INLINABLE minus256 #-}
 minus256 :: Word256 -> Word256 -> Word256
-minus256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
-         (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
+minus256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
+    Word256 s3 s2 s1 s0
   where
-    !(# s0, v1 #) = subWordC# a0 b0
-    !(# s1, v2 #) =
-      case compatCaseOnIntLiteral# v1 of
-        0# -> subWordC# a1 b1
-        _ ->
-          case compatCaseOnWordLiteral# a1 of
-            0## -> (# minusWord# (compatWordLiteral# 0xFFFFFFFFFFFFFFFF##) b1, compatIntLiteral# 1# #)
-            _ -> subWordC# (minusWord# a1 (compatWordLiteral# 1##)) b1
-    !(# s2, v3 #) =
-      case compatCaseOnIntLiteral# v2 of
-        0# -> subWordC# a2 b2
-        _ ->
-          case compatCaseOnWordLiteral# a2 of
-            0## -> (# minusWord# (compatWordLiteral# 0xFFFFFFFFFFFFFFFF##) b2, compatIntLiteral# 1# #)
-            _ -> subWordC# (minusWord# a2 (compatWordLiteral# 1##)) b2
+    !(v1, s0) = subCarryDiff a0 b0
+    !(v2, s1) =
+      if v1 == 0
+        then subCarryDiff a1 b1
+        else if a1 == 0
+          then (0xFFFFFFFFFFFFFFFF - b1, 1)
+          else subCarryDiff (a1 - 1) b1
+    !(v3, s2) =
+      if v2 == 0
+        then subCarryDiff a2 b2
+        else if a1 == 0
+          then (0xFFFFFFFFFFFFFFFF - b2, 1)
+          else subCarryDiff (a2 - 1) b2
     !s3 =
-      case compatCaseOnIntLiteral# v3 of
-        0# -> minusWord# a3 b3
-        _ -> minusWord# (minusWord# a3 (compatWordLiteral# 1##)) b3
+      if v3 == 0
+        then a3 - b3
+        else (a3 - 1) - b3
 
 times256 :: Word256 -> Word256 -> Word256
-times256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
-         (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# r3) (W64# r2) (W64# r1) (W64# r0)
+times256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
+    Word256 r3 r2 r1 r0
   where
-    !(# c00, p00 #) = timesWord2# a0 b0
-    !(# c01, p01 #) = timesWord2# a0 b1
-    !(# c02, p02 #) = timesWord2# a0 b2
-    !p03 = timesWord# a0 b3
-    !(# c10, p10 #) = timesWord2# a1 b0
-    !(# c11, p11 #) = timesWord2# a1 b1
-    !p12 = timesWord# a1 b2
-    !(# c20, p20 #) = timesWord2# a2 b0
-    !p21 = timesWord# a2 b1
-    !p30 = timesWord# a3 b0
+    !(c00, p00) = timesCarryProd a0 b0
+    !(c01, p01) = timesCarryProd a0 b1
+    !(c02, p02) = timesCarryProd a0 b2
+    !p03 = a0 * b3
+    !(c10, p10) = timesCarryProd a1 b0
+    !(c11, p11) = timesCarryProd a1 b1
+    !p12 = a1 * b2
+    !(c20, p20) = timesCarryProd a2 b0
+    !p21 = a2 * b1
+    !p30 = a3 * b0
     !r0 = p00
     !c1 = c00
-    !(# c2x, r1a #) = plusWord2# p01 p10
-    !(# c2y, r1b #) = plusWord2# r1a c1
-    !(# c3w, c2 #) = plusWord2# c2x c2y
+    !(c2x, r1a) = plusCarrySum p01 p10
+    !(c2y, r1b) = plusCarrySum r1a c1
+    !(c3w, c2) = plusCarrySum c2x c2y
     !r1 = r1b
-    !(# c3x, r2a #) = plusWord2# p11 p20
-    !(# c3y, r2b #) = plusWord2# p02 r2a
-    !(# c3z, r2c #) = plusWord2# r2b c2
-    !(# c3s, r2d #) = plusWord2# r2c c01
-    !(# c3t, r2e #) = plusWord2# r2d c10
+    !(c3x, r2a) = plusCarrySum p11 p20
+    !(c3y, r2b) = plusCarrySum p02 r2a
+    !(c3z, r2c) = plusCarrySum r2b c2
+    !(c3s, r2d) = plusCarrySum r2c c01
+    !(c3t, r2e) = plusCarrySum r2d c10
     !r2 = r2e
-    !r3 = p30 `plusWord#` p21 `plusWord#` p12 `plusWord#`
-         p03 `plusWord#` c3w `plusWord#` c3x `plusWord#`
-         c3y `plusWord#` c3z `plusWord#` c3s `plusWord#`
-         c3t `plusWord#` c02 `plusWord#` c11 `plusWord#`
-         c20
+    !r3 = p30 + p21 + p12 + p03 + c3w + c3x +
+           c3y + c3z + c3s + c3t + c02 + c11 + c20
 
 {-# INLINABLE negate256 #-}
 negate256 :: Word256 -> Word256
-negate256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0)) =
-  case plusWord2# (not# a0) (compatWordLiteral# 1##) of
-    (# c1, s0 #) -> case plusWord2# (not# a1) c1 of
-      (# c2, s1 #) -> case plusWord2# (not# a2) c2 of
-        (# c3, s2 #) -> case plusWord# (not# a3) c3 of
-          s3 -> Word256 (W64# s3) (W64# s2) (W64# s1) (W64# s0)
+negate256 (Word256 a3 a2 a1 a0) =
+  case plusCarrySum (complement a0) 1 of
+    (c1, s0) -> case plusCarrySum (complement a1) c1 of
+      (c2, s1) -> case plusCarrySum (complement a2) c2 of
+        (c3, s2) -> case complement a3 + c3 of
+          s3 -> Word256 s3 s2 s1 s0
 
 {-# INLINABLE signum256 #-}
 signum256 :: Word256 -> Word256
-signum256 (Word256 (W64# a) (W64# b) (W64# c) (W64# d))
-  | isZeroWord# a
-  , isZeroWord# b
-  , isZeroWord# c
-  , isZeroWord# d
-  = zeroWord256
-  | otherwise = oneWord256
+signum256 (Word256 a b c d) =
+  if a == 0 && b == 0 && c == 0 && d == 0
+    then zeroWord256
+    else oneWord256
 
 fromInteger256 :: Integer -> Word256
-fromInteger256 i = Word256
-  (fromInteger $ i `shiftR` 192)
-  (fromInteger $ i `shiftR` 128)
-  (fromInteger $ i `shiftR` 64)
-  (fromInteger i)
+fromInteger256 i =
+  Word256
+    (fromInteger $ i `shiftR` 192) (fromInteger $ i `shiftR` 128)
+    (fromInteger $ i `shiftR` 64) (fromInteger i)
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Bits` instance.
 
 {-# INLINABLE and256 #-}
 and256 :: Word256 -> Word256 -> Word256
-and256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
-       (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# (and# a3 b3)) (W64# (and# a2 b2))
-          (W64# (and# a1 b1)) (W64# (and# a0 b0))
+and256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
+  Word256 (a3 .&. b3) (a2 .&. b2) (a1 .&. b1) (a0 .&. b0)
 
 {-# INLINABLE or256 #-}
 or256 :: Word256 -> Word256 -> Word256
-or256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
-      (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# (or# a3 b3)) (W64# (or# a2 b2))
-          (W64# (or# a1 b1)) (W64# (or# a0 b0))
+or256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
+  Word256 (a3 .|. b3) (a2 .|. b2) (a1 .|. b1) (a0 .|. b0)
 
 {-# INLINABLE xor256 #-}
 xor256 :: Word256 -> Word256 -> Word256
-xor256 (Word256 (W64# a3) (W64# a2) (W64# a1) (W64# a0))
-       (Word256 (W64# b3) (W64# b2) (W64# b1) (W64# b0)) =
-  Word256 (W64# (xor# a3 b3)) (W64# (xor# a2 b2))
-          (W64# (xor# a1 b1)) (W64# (xor# a0 b0))
+xor256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
+  Word256 (xor a3 b3) (xor a2 b2) (xor a1 b1) (xor a0 b0)
 
 {-# INLINABLE complement256 #-}
 complement256 :: Word256 -> Word256
-complement256 (Word256 a3 a2 a1 a0) = Word256
-  (complement a3) (complement a2)
-  (complement a1) (complement a0)
+complement256 (Word256 a3 a2 a1 a0) =
+  Word256 (complement a3) (complement a2) (complement a1) (complement a0)
 
 -- Probably not worth inlining this.
 shiftL256 :: Word256 -> Int -> Word256
@@ -413,22 +394,24 @@ shiftL256 w@(Word256 a3 a2 a1 a0) s
   | s == 0 = w
   | s > 192 = Word256 (a0 `shiftL` (s - 192)) 0 0 0
   | s == 192 = Word256 a0 0 0 0
-  | s > 128 = Word256
-      (a1 `shiftL` (s - 128) + a0 `shiftR` (192 - s))
-      (a0 `shiftL` (s - 128))
-      0 0
+  | s > 128 =
+      Word256
+        (a1 `shiftL` (s - 128) + a0 `shiftR` (192 - s))
+        (a0 `shiftL` (s - 128)) 0 0
   | s == 128 = Word256 a1 a0 0 0
-  | s > 64 = Word256
-      (a2 `shiftL` (s - 64) + a1 `shiftR` (128 - s))
-      (a1 `shiftL` (s - 64) + a0 `shiftR` (128 - s))
-      (a0 `shiftL` (s - 64))
-      0
+  | s > 64 =
+      Word256
+        (a2 `shiftL` (s - 64) + a1 `shiftR` (128 - s))
+        (a1 `shiftL` (s - 64) + a0 `shiftR` (128 - s))
+        (a0 `shiftL` (s - 64))
+        0
   | s == 64 = Word256 a2 a1 a0 0
-  | otherwise = Word256
-      (a3 `shiftL` s + a2 `shiftR` (64 - s))
-      (a2 `shiftL` s + a1 `shiftR` (64 - s))
-      (a1 `shiftL` s + a0 `shiftR` (64 - s))
-      (a0 `shiftL` s)
+  | otherwise =
+      Word256
+        (a3 `shiftL` s + a2 `shiftR` (64 - s))
+        (a2 `shiftL` s + a1 `shiftR` (64 - s))
+        (a1 `shiftL` s + a0 `shiftR` (64 - s))
+        (a0 `shiftL` s)
 
 shiftR256 :: Word256 -> Int -> Word256
 shiftR256 w@(Word256 a3 a2 a1 a0) s
@@ -437,20 +420,19 @@ shiftR256 w@(Word256 a3 a2 a1 a0) s
   | s >= 256 = zeroWord256
   | s > 192 = Word256 0 0 0 (a3 `shiftR` (s - 192))
   | s == 192 = Word256 0 0 0 a3
-  | s > 128 = Word256 0 0
-      (a3 `shiftR` (s - 128))
-      (a2 `shiftR` (s - 128) + a3 `shiftL` (192 - s))
+  | s > 128 =
+      Word256 0 0 (a3 `shiftR` (s - 128)) (a2 `shiftR` (s - 128) + a3 `shiftL` (192 - s))
   | s == 128 = Word256 0 0 a3 a2
-  | s > 64 = Word256 0
-      (a3 `shiftR` (s - 64))
-      (a2 `shiftR` (s - 64) + a3 `shiftL` (128 - s))
-      (a1 `shiftR` (s - 64) + a2 `shiftL` (128 - s))
+  | s > 64 =
+      Word256 0 (a3 `shiftR` (s - 64))
+        (a2 `shiftR` (s - 64) + a3 `shiftL` (128 - s))
+        (a1 `shiftR` (s - 64) + a2 `shiftL` (128 - s))
   | s == 64 = Word256 0 a3 a2 a1
-  | otherwise = Word256
-      (a3 `shiftR` s)
-      (a2 `shiftR` s + a3 `shiftL` (64 - s))
-      (a1 `shiftR` s + a2 `shiftL` (64 - s))
-      (a0 `shiftR` s + a1 `shiftL` (64 - s))
+  | otherwise =
+      Word256 (a3 `shiftR` s)
+        (a2 `shiftR` s + a3 `shiftL` (64 - s))
+        (a1 `shiftR` s + a2 `shiftL` (64 - s))
+        (a0 `shiftR` s + a1 `shiftL` (64 - s))
 
 rotateL256 :: Word256 -> Int -> Word256
 rotateL256 w@(Word256 a3 a2 a1 a0) r
@@ -459,12 +441,9 @@ rotateL256 w@(Word256 a3 a2 a1 a0) r
   | r >= 256 = rotateL256 w (r `mod` 256)
   | r >= 64 = rotateL256 (Word256 a2 a1 a0 a3) (r - 64)
   | otherwise =
-      Word256 s3 s2 s1 s0
-      where
-        s0 = a0 `shiftL` r + a3 `shiftR` (64 - r)
-        s1 = a1 `shiftL` r + a0 `shiftR` (64 - r)
-        s2 = a2 `shiftL` r + a1 `shiftR` (64 - r)
-        s3 = a3 `shiftL` r + a2 `shiftR` (64 - r)
+      Word256
+        (a3 `shiftL` r + a2 `shiftR` (64 - r)) (a2 `shiftL` r + a1 `shiftR` (64 - r))
+        (a1 `shiftL` r + a0 `shiftR` (64 - r)) (a0 `shiftL` r + a3 `shiftR` (64 - r))
 
 rotateR256 :: Word256 -> Int -> Word256
 rotateR256 w@(Word256 a3 a2 a1 a0) r
@@ -473,12 +452,9 @@ rotateR256 w@(Word256 a3 a2 a1 a0) r
   | r >= 256 = rotateR256 w (r `mod` 256)
   | r >= 64 = rotateR256 (Word256 a0 a3 a2 a1) (r - 64)
   | otherwise =
-      Word256 s3 s2 s1 s0
-      where
-        s0 = a0 `shiftR` r + a1 `shiftL` (64 - r)
-        s1 = a1 `shiftR` r + a2 `shiftL` (64 - r)
-        s2 = a2 `shiftR` r + a3 `shiftL` (64 - r)
-        s3 = a3 `shiftR` r + a0 `shiftL` (64 - r)
+      Word256
+        (a3 `shiftR` r + a0 `shiftL` (64 - r)) (a2 `shiftR` r + a3 `shiftL` (64 - r))
+        (a1 `shiftR` r + a2 `shiftL` (64 - r)) (a0 `shiftR` r + a1 `shiftL` (64 - r))
 
 testBit256 :: Word256 -> Int -> Bool
 testBit256 (Word256 a3 a2 a1 a0) i
@@ -534,28 +510,27 @@ quotRem256 a b =
 
 toInteger256 :: Word256 -> Integer
 toInteger256 (Word256 a3 a2 a1 a0) =
-    (toInteger a3 `shiftL` 192)
-  + (toInteger a2 `shiftL` 128)
-  + (toInteger a1 `shiftL` 64)
-  + toInteger a0
+  (toInteger a3 `shiftL` 192)
+    + (toInteger a2 `shiftL` 128)
+    + (toInteger a1 `shiftL` 64)
+    + toInteger a0
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Storable` instance.
 
 peek256 :: Ptr Word256 -> IO Word256
-peek256 ptr = Word256
-  <$> peekElemOff (castPtr ptr) index3
-  <*> peekElemOff (castPtr ptr) index2
-  <*> peekElemOff (castPtr ptr) index1
-  <*> peekElemOff (castPtr ptr) index0
+peek256 ptr =
+  Word256 <$> peekElemOff (castPtr ptr) index3 <*> peekElemOff (castPtr ptr) index2
+    <*> peekElemOff (castPtr ptr) index1 <*> peekElemOff (castPtr ptr) index0
 
 peekElemOff256 :: Ptr Word256 -> Int -> IO Word256
-peekElemOff256 ptr idx = Word256
-  <$> peekElemOff (castPtr ptr) (idx2 + index3)
-  <*> peekElemOff (castPtr ptr) (idx2 + index2)
-  <*> peekElemOff (castPtr ptr) (idx2 + index1)
-  <*> peekElemOff (castPtr ptr) (idx2 + index0)
-  where idx2 = 4 * idx
+peekElemOff256 ptr idx =
+  Word256 <$> peekElemOff (castPtr ptr) (idx2 + index3)
+    <*> peekElemOff (castPtr ptr) (idx2 + index2)
+    <*> peekElemOff (castPtr ptr) (idx2 + index1)
+    <*> peekElemOff (castPtr ptr) (idx2 + index0)
+  where
+    idx2 = 4 * idx
 
 poke256 :: Ptr Word256 -> Word256 -> IO ()
 poke256 ptr (Word256 a3 a2 a1 a0) = do
@@ -566,11 +541,12 @@ poke256 ptr (Word256 a3 a2 a1 a0) = do
 
 pokeElemOff256 :: Ptr Word256 -> Int -> Word256 -> IO ()
 pokeElemOff256 ptr idx (Word256 a3 a2 a1 a0) = do
-  pokeElemOff (castPtr ptr) (idx2 + index0) a0
-  pokeElemOff (castPtr ptr) (idx2 + index1) a1
-  pokeElemOff (castPtr ptr) (idx2 + index2) a2
-  pokeElemOff (castPtr ptr) (idx2 + index3) a3
-  where idx2 = 4 * idx
+    pokeElemOff (castPtr ptr) (idx2 + index0) a0
+    pokeElemOff (castPtr ptr) (idx2 + index1) a1
+    pokeElemOff (castPtr ptr) (idx2 + index2) a2
+    pokeElemOff (castPtr ptr) (idx2 + index3) a3
+  where
+    idx2 = 4 * idx
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Prim` instance.

@@ -10,6 +10,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           Data.Bifunctor (first)
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
+import           Data.Int (Int32)
 import           Data.Primitive.PrimArray
 import           Data.Primitive.Ptr
 import           Data.Word (Word8, Word64, byteSwap64)
@@ -101,7 +102,7 @@ tryEvaluate x = do
 prop_toEnum_fromEnum :: Property
 prop_toEnum_fromEnum =
   propertyCount $ do
-    a0 <- H.forAll genWord32
+    a0 <- H.forAll $ Gen.integral (Range.linear 0 (maxBound :: Int32))
     let i128 = Int128 0 (fromIntegral a0)
         e128 = fromEnum i128
     toInteger e128 === toInteger a0

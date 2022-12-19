@@ -13,7 +13,6 @@ module Data.WideWord.Compat
   , minusWord#
   , subWordC#
   , not#
-  , isZeroWord#
   , or#
   , and#
   , xor#
@@ -86,16 +85,6 @@ quotRemWord2# :: Word64# -> Word64# -> Word64# -> (# Word64#, Word64# #)
 quotRemWord2# a b c =
   case GHC.Base.quotRemWord2# (word64ToWord# a) (word64ToWord# b) (word64ToWord# c) of
     (# x, y #) -> (# wordToWord64# x, wordToWord64# y #)
-#endif
-
-isZeroWord#
-#if MIN_VERSION_base(4,17,0)
-    :: Word64# -> Bool
-isZeroWord# a = GHC.Base.isTrue# (GHC.Base.eqWord# (word64ToWord# a) 0##)
-#else
-    :: Word# -> Bool
-isZeroWord# 0## = True
-isZeroWord# _ = False
 #endif
 
 compatWordLiteral#
