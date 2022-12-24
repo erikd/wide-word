@@ -1,5 +1,13 @@
 # Revision history for wide-word
 
+## 0.1.4.0 -- 2022-12-24
+
+* Add support for building on 32 bit architectures with ghc-9.2 or later.
+
+## 0.1.3.0 -- 2022-12-01
+
+* Add Hashable instances for Int128, Word128, and Word256.
+
 ## 0.1.2.0 -- 2022-??-??
 
 * Add Hashable instances for Int128, Word128, and Word256.
