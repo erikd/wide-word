@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.5.0 -- 2023-mm-dd
+
+* Add Binary instances for Int128, Word128 and Word256.
+
 ## 0.1.4.0 -- 2022-12-24
 
 * Add support for building on 32 bit architectures with ghc-9.2 or later.
