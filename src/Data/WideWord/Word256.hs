@@ -53,6 +53,7 @@ import Numeric (showHex)
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 import Data.Hashable (Hashable,hashWithSalt)
+import Data.Binary (Binary (get,put))
 
 {- HLINT ignore "Use guards" -}
 
@@ -67,6 +68,11 @@ data Word256 = Word256
 instance Hashable Word256 where
   hashWithSalt s (Word256 a1 a2 a3 a4) =
     s `hashWithSalt` a1 `hashWithSalt` a2 `hashWithSalt` a3 `hashWithSalt` a4
+
+-- | @since 0.1.5.0
+instance Binary Word256 where
+  put (Word256 a1 a2 a3 a4) = put a1 >> put a2 >> put a3 >> put a4
+  get = Word256 <$> get <*> get <*> get <*> get
 
 showHexWord256 :: Word256 -> String
 showHexWord256 (Word256 a3 a2 a1 a0)

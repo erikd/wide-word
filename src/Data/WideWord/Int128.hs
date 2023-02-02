@@ -56,6 +56,7 @@ import GHC.Word (Word32, Word64, byteSwap64)
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
 import Data.Hashable (Hashable,hashWithSalt)
+import Data.Binary (Binary (get,put))
 
 import Data.WideWord.Word64
 
@@ -70,9 +71,14 @@ data Int128 = Int128
   , int128Lo64 :: !Word64
   }
   deriving (Eq, Data, Generic, Ix, Typeable)
-
+ 
 instance Hashable Int128 where
   hashWithSalt s (Int128 a1 a2) = s `hashWithSalt` a1 `hashWithSalt` a2
+
+-- | @since 0.1.5.0
+instance Binary Int128 where
+  put (Int128 a1 a2) = put a1 >> put a2
+  get = Int128 <$> get <*> get
 
 byteSwapInt128 :: Int128 -> Int128
 byteSwapInt128 (Int128 a1 a0) = Int128 (byteSwap64 a0) (byteSwap64 a1)
