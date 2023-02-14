@@ -1,6 +1,6 @@
 # Revision history for wide-word
 
-## 0.1.5.0 -- 2023-mm-dd
+## 0.1.5.0 -- 2023-01-14
 
 * Add Binary instances for Int128, Word128 and Word256.
 
