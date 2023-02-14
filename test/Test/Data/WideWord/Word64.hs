@@ -9,6 +9,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad (unless)
 
 import           Data.Bifunctor (first)
+import qualified Data.Binary as Binary
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
 import           Data.Primitive.PrimArray
@@ -271,6 +272,12 @@ prop_divMod =
     den <- H.forAll $ Gen.filter (/= 0) genWord64
     let (d, m) = divMod num den
     (toInteger64 d, toInteger64 m) === divMod (toInteger64 num) (toInteger64 den)
+
+prop_roundtrip_binary :: Property
+prop_roundtrip_binary =
+  propertyCount $ do
+    w64 <- H.forAll genWord128
+    H.tripping w64 Binary.encode (Just . Binary.decode)
 
 prop_peek_and_poke :: Property
 prop_peek_and_poke =

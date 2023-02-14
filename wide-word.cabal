@@ -63,6 +63,7 @@ test-suite test
                       Test.Data.WideWord.Word128
 
   build-depends:       base
+                     , binary
                      , bytestring                    >= 0.10
                      , ghc-prim
                      , hedgehog                      >= 1.0 && < 1.3
