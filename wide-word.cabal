@@ -46,7 +46,7 @@ library
                      , deepseq                       >= 1.4.2.0     && < 1.5
                      -- Required so that GHC.IntWord64 is available on 32 bit systems
                      , ghc-prim
-                     , primitive                     >= 0.6.4.0     && < 0.8
+                     , primitive                     >= 0.6.4.0     && < 0.9
                      , hashable                      >= 1.2         && < 1.5
 
 test-suite test
