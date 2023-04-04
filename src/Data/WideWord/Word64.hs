@@ -151,6 +151,7 @@ timesCarryProd (W64# a) (W64# b) =
 
     !p3 = c3a `plusWord#` c3b `plusWord#` c3c `plusWord#` c3d `plusWord#` c3e
 
+{-# INLINE word64ToHiWord# #-}
 word64ToHiWord# :: Word64# -> Word#
 word64ToHiWord# w = word64ToWord# (w `uncheckedShiftRL64#` 32#)
 

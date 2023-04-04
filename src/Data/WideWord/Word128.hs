@@ -324,7 +324,11 @@ xor128 (Word128 a1 a0) (Word128 b1 b0) = Word128 (xor a1 b1) (xor a0 b0)
 complement128 :: Word128 -> Word128
 complement128 (Word128 a1 a0) = Word128 (complement a1) (complement a0)
 
--- Probably not worth inlining this.
+-- Some of the following functions have quite complicated guard clauses, but we make them
+-- inlineable anyway so that if the things like the shift amount is a compile time constant
+-- most of the function can be dropped leaving only the needed bits inlined.
+
+{-# INLINABLE shiftL128 #-}
 shiftL128 :: Word128 -> Int -> Word128
 shiftL128 w@(Word128 a1 a0) s
   | s == 0 = w
@@ -338,7 +342,7 @@ shiftL128 w@(Word128 a1 a0) s
         s0 = a0 `shiftL` s
         s1 = a1 `shiftL` s + a0 `shiftR` (64 - s)
 
--- Probably not worth inlining this.
+{-# INLINABLE shiftR128 #-}
 shiftR128 :: Word128 -> Int -> Word128
 shiftR128 w@(Word128 a1 a0) s
   | s < 0 = zeroWord128
@@ -352,6 +356,7 @@ shiftR128 w@(Word128 a1 a0) s
         s1 = a1 `shiftR` s
         s0 = a0 `shiftR` s + a1 `shiftL` (64 - s)
 
+{-# INLINABLE rotateL128 #-}
 rotateL128 :: Word128 -> Int -> Word128
 rotateL128 w@(Word128 a1 a0) r
   | r == 0 = w
@@ -365,6 +370,7 @@ rotateL128 w@(Word128 a1 a0) r
         s0 = a0 `shiftL` r + a1 `shiftR` (64 - r)
         s1 = a1 `shiftL` r + a0 `shiftR` (64 - r)
 
+{-# INLINABLE rotateR128 #-}
 rotateR128 :: Word128 -> Int -> Word128
 rotateR128 w@(Word128 a1 a0) r
   | r == 0 = w
@@ -378,6 +384,7 @@ rotateR128 w@(Word128 a1 a0) r
         s0 = a0 `shiftR` r + a1 `shiftL` (64 - r)
         s1 = a1 `shiftR` r + a0 `shiftL` (64 - r)
 
+{-# INLINABLE testBit128 #-}
 testBit128 :: Word128 -> Int -> Bool
 testBit128 (Word128 a1 a0) i
   | i < 0 = False
@@ -385,24 +392,28 @@ testBit128 (Word128 a1 a0) i
   | i >= 64 = testBit a1 (i - 64)
   | otherwise = testBit a0 i
 
+{-# INLINABLE bit128 #-}
 bit128 :: Int -> Word128
 bit128 indx
   | indx < 0 = zeroWord128
   | indx >= 128 = zeroWord128
   | otherwise = shiftL128 oneWord128 indx
 
+{-# INLINABLE popCount128 #-}
 popCount128 :: Word128 -> Int
 popCount128 (Word128 a1 a0) = popCount a1 + popCount a0
 
 -- -----------------------------------------------------------------------------
 -- Functions for `FiniteBits` instance.
 
+{-# INLINABLE countLeadingZeros128 #-}
 countLeadingZeros128 :: Word128 -> Int
 countLeadingZeros128 (Word128 a1 a0) =
   case countLeadingZeros a1 of
     64 -> 64 +  countLeadingZeros a0
     res -> res
 
+{-# INLINABLE countTrailingZeros128 #-}
 countTrailingZeros128 :: Word128 -> Int
 countTrailingZeros128 (Word128 a1 a0) =
   case countTrailingZeros a0 of

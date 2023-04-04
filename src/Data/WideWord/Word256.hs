@@ -393,7 +393,11 @@ complement256 :: Word256 -> Word256
 complement256 (Word256 a3 a2 a1 a0) =
   Word256 (complement a3) (complement a2) (complement a1) (complement a0)
 
--- Probably not worth inlining this.
+-- Some of the following functions have quite complicated guard clauses, but we make them
+-- inlineable anyway so that if the things like the shift amount is a compile time constant
+-- most of the function can be dropped leaving only the needed bits inlined.
+
+{-# INLINABLE shiftL256 #-}
 shiftL256 :: Word256 -> Int -> Word256
 shiftL256 w@(Word256 a3 a2 a1 a0) s
   | s < 0 || s >= 256 = zeroWord256
@@ -419,6 +423,7 @@ shiftL256 w@(Word256 a3 a2 a1 a0) s
         (a1 `shiftL` s + a0 `shiftR` (64 - s))
         (a0 `shiftL` s)
 
+{-# INLINABLE shiftR256 #-}
 shiftR256 :: Word256 -> Int -> Word256
 shiftR256 w@(Word256 a3 a2 a1 a0) s
   | s < 0 = zeroWord256
@@ -440,6 +445,7 @@ shiftR256 w@(Word256 a3 a2 a1 a0) s
         (a1 `shiftR` s + a2 `shiftL` (64 - s))
         (a0 `shiftR` s + a1 `shiftL` (64 - s))
 
+{-# INLINABLE rotateL256 #-}
 rotateL256 :: Word256 -> Int -> Word256
 rotateL256 w@(Word256 a3 a2 a1 a0) r
   | r < 0 = zeroWord256
@@ -451,6 +457,7 @@ rotateL256 w@(Word256 a3 a2 a1 a0) r
         (a3 `shiftL` r + a2 `shiftR` (64 - r)) (a2 `shiftL` r + a1 `shiftR` (64 - r))
         (a1 `shiftL` r + a0 `shiftR` (64 - r)) (a0 `shiftL` r + a3 `shiftR` (64 - r))
 
+{-# INLINABLE rotateR256 #-}
 rotateR256 :: Word256 -> Int -> Word256
 rotateR256 w@(Word256 a3 a2 a1 a0) r
   | r < 0 = rotateR256 w (256 - (abs r `mod` 256))
@@ -462,6 +469,7 @@ rotateR256 w@(Word256 a3 a2 a1 a0) r
         (a3 `shiftR` r + a0 `shiftL` (64 - r)) (a2 `shiftR` r + a3 `shiftL` (64 - r))
         (a1 `shiftR` r + a2 `shiftL` (64 - r)) (a0 `shiftR` r + a1 `shiftL` (64 - r))
 
+{-# INLINABLE testBit256 #-}
 testBit256 :: Word256 -> Int -> Bool
 testBit256 (Word256 a3 a2 a1 a0) i
   | i < 0 = False
@@ -471,12 +479,14 @@ testBit256 (Word256 a3 a2 a1 a0) i
   | i >= 64 = testBit a1 (i - 64)
   | otherwise = testBit a0 i
 
+{-# INLINABLE bit256 #-}
 bit256 :: Int -> Word256
 bit256 indx
   | indx < 0 = zeroWord256
   | indx >= 256 = zeroWord256
   | otherwise = shiftL256 oneWord256 indx
 
+{-# INLINABLE popCount256 #-}
 popCount256 :: Word256 -> Int
 popCount256 (Word256 a3 a2 a1 a0) =
   popCount a3 + popCount a2 + popCount a1 + popCount a0
@@ -484,6 +494,7 @@ popCount256 (Word256 a3 a2 a1 a0) =
 -- -----------------------------------------------------------------------------
 -- Functions for `FiniteBits` instance.
 
+{-# INLINABLE countLeadingZeros256 #-}
 countLeadingZeros256 :: Word256 -> Int
 countLeadingZeros256 (Word256 a3 a2 a1 a0) =
   case countLeadingZeros a3 of
@@ -494,6 +505,7 @@ countLeadingZeros256 (Word256 a3 a2 a1 a0) =
       res -> 64 + res
     res -> res
 
+{-# INLINABLE countTrailingZeros256 #-}
 countTrailingZeros256 :: Word256 -> Int
 countTrailingZeros256 (Word256 a3 a2 a1 a0) =
   case countTrailingZeros a0 of

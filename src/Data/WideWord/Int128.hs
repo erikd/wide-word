@@ -341,7 +341,11 @@ xor128 :: Int128 -> Int128 -> Int128
 xor128 (Int128 a1 a0) (Int128 b1 b0) =
   Int128 (xor a1 b1) (xor a0 b0)
 
--- Probably not worth inlining this.
+-- Some of the following functions have quite complicated guard clauses, but we make them
+-- inlineable anyway so that if the things like the shift amount is a compile time constant
+-- most of the function can be dropped leaving only the needed bits inlined.
+
+{-# INLINABLE shiftL128 #-}
 shiftL128 :: Int128 -> Int -> Int128
 shiftL128 w@(Int128 a1 a0) s
   | s == 0 = w
@@ -352,7 +356,7 @@ shiftL128 w@(Int128 a1 a0) s
   | otherwise =
       Int128 (a1 `shiftL` s + a0 `shiftR` (64 - s)) (a0 `shiftL` s)
 
--- Probably not worth inlining this.
+{-# INLINABLE shiftR128 #-}
 shiftR128 :: Int128 -> Int -> Int128
 shiftR128 i@(Int128 a1 a0) s
   | s < 0 = zeroInt128
@@ -363,6 +367,7 @@ shiftR128 i@(Int128 a1 a0) s
   | s > 64 = Int128 0 (a1 `shiftR` (s - 64))
   | otherwise = Int128 (a1 `shiftR` s) (a0 `shiftR` s + a1 `shiftL` (64 - s))
 
+{-# INLINABLE rotateL128 #-}
 rotateL128 :: Int128 -> Int -> Int128
 rotateL128 w@(Int128 a1 a0) r
   | r < 0 = zeroInt128
@@ -373,6 +378,7 @@ rotateL128 w@(Int128 a1 a0) r
   | otherwise =
       Int128 (a1 `shiftL` r + a0 `shiftR` (64 - r)) (a0 `shiftL` r + a1 `shiftR` (64 - r))
 
+{-# INLINABLE rotateR128 #-}
 rotateR128 :: Int128 -> Int -> Int128
 rotateR128 w@(Int128 a1 a0) r
   | r < 0 = rotateR128 w (128 - (abs r `mod` 128))
@@ -383,6 +389,7 @@ rotateR128 w@(Int128 a1 a0) r
   | otherwise =
       Int128 (a1 `shiftR` r + a0 `shiftL` (64 - r)) (a0 `shiftR` r + a1 `shiftL` (64 - r))
 
+{-# INLINABLE testBit128 #-}
 testBit128 :: Int128 -> Int -> Bool
 testBit128 (Int128 a1 a0) i
   | i < 0 = False
@@ -390,12 +397,14 @@ testBit128 (Int128 a1 a0) i
   | i >= 64 = testBit a1 (i - 64)
   | otherwise = testBit a0 i
 
+{-# INLINABLE bit128 #-}
 bit128 :: Int -> Int128
 bit128 indx
   | indx < 0 = zeroInt128
   | indx >= 128 = zeroInt128
   | otherwise = shiftL128 oneInt128 indx
 
+{-# INLINABLE popCount128 #-}
 popCount128 :: Int128 -> Int
 popCount128 (Int128 a1 a0) = popCount a1 + popCount a0
 
