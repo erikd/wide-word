@@ -370,7 +370,7 @@ shiftR128 i@(Int128 a1 a0) s
 {-# INLINABLE rotateL128 #-}
 rotateL128 :: Int128 -> Int -> Int128
 rotateL128 w@(Int128 a1 a0) r
-  | r < 0 = zeroInt128
+  | r < 0 = rotateL128 w (128 - (abs r `mod` 128))
   | r == 0 = w
   | r >= 128 = rotateL128 w (r `mod` 128)
   | r == 64 = Int128 a0 a1
