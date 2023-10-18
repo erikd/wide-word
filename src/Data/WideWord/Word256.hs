@@ -400,8 +400,10 @@ complement256 (Word256 a3 a2 a1 a0) =
 {-# INLINABLE shiftL256 #-}
 shiftL256 :: Word256 -> Int -> Word256
 shiftL256 w@(Word256 a3 a2 a1 a0) s
-  | s < 0 || s >= 256 = zeroWord256
   | s == 0 = w
+  | s == minBound = zeroWord256
+  | s < 0 = shiftR256 w (negate s)
+  | s >= 256 = zeroWord256
   | s > 192 = Word256 (a0 `shiftL` (s - 192)) 0 0 0
   | s == 192 = Word256 a0 0 0 0
   | s > 128 =
@@ -426,8 +428,9 @@ shiftL256 w@(Word256 a3 a2 a1 a0) s
 {-# INLINABLE shiftR256 #-}
 shiftR256 :: Word256 -> Int -> Word256
 shiftR256 w@(Word256 a3 a2 a1 a0) s
-  | s < 0 = zeroWord256
   | s == 0 = w
+  | s == minBound = zeroWord256
+  | s < 0 = shiftL256 w (negate s)
   | s >= 256 = zeroWord256
   | s > 192 = Word256 0 0 0 (a3 `shiftR` (s - 192))
   | s == 192 = Word256 0 0 0 a3
