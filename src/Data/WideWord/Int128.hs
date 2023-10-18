@@ -349,7 +349,8 @@ xor128 (Int128 a1 a0) (Int128 b1 b0) =
 shiftL128 :: Int128 -> Int -> Int128
 shiftL128 w@(Int128 a1 a0) s
   | s == 0 = w
-  | s < 0 = shiftL128 w (128 - (abs s `mod` 128))
+  | s == minBound = zeroInt128
+  | s < 0 = shiftR128 w (negate s)
   | s >= 128 = zeroInt128
   | s == 64 = Int128 a0 0
   | s > 64 = Int128 (a0 `shiftL` (s - 64)) 0
@@ -359,8 +360,9 @@ shiftL128 w@(Int128 a1 a0) s
 {-# INLINABLE shiftR128 #-}
 shiftR128 :: Int128 -> Int -> Int128
 shiftR128 i@(Int128 a1 a0) s
-  | s < 0 = zeroInt128
   | s == 0 = i
+  | s == minBound = zeroInt128
+  | s < 0 = shiftL128 i (negate s)
   | topBitSetWord64 a1 = complement128 (shiftR128 (complement128 i) s)
   | s >= 128 = zeroInt128
   | s == 64 = Int128 0 a1

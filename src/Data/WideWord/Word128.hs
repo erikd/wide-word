@@ -332,7 +332,8 @@ complement128 (Word128 a1 a0) = Word128 (complement a1) (complement a0)
 shiftL128 :: Word128 -> Int -> Word128
 shiftL128 w@(Word128 a1 a0) s
   | s == 0 = w
-  | s < 0 = shiftL128 w (128 - (abs s `mod` 128))
+  | s == minBound = zeroWord128
+  | s < 0 = shiftR128 w (negate s)
   | s >= 128 = zeroWord128
   | s == 64 = Word128 a0 0
   | s > 64 = Word128 (a0 `shiftL` (s - 64)) 0
@@ -345,8 +346,9 @@ shiftL128 w@(Word128 a1 a0) s
 {-# INLINABLE shiftR128 #-}
 shiftR128 :: Word128 -> Int -> Word128
 shiftR128 w@(Word128 a1 a0) s
-  | s < 0 = zeroWord128
   | s == 0 = w
+  | s == minBound = zeroWord128
+  | s < 0 = shiftL128 w (negate s)
   | s >= 128 = zeroWord128
   | s == 64 = Word128 0 a1
   | s > 64 = Word128 0 (a1 `shiftR` (s - 64))
