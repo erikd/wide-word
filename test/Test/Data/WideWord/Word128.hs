@@ -206,14 +206,12 @@ prop_logical_rotate_left =
     w128 <- H.forAll genWord128
     rot <- H.forAll $ Gen.int (Range.linearFrom 0 (-20000) 20000)
     let i128 = toInteger128 w128
-        expected
-          | rot < 0 = 0
-          | otherwise =
-              correctWord128 (i128 `shiftL` erot + i128 `shiftR` (128 - (erot `mod` 128)))
-              where
-                erot
-                  | rot < 0 = 128 - (abs rot `mod` 128)
-                  | otherwise = rot `mod` 128
+        expected =
+          correctWord128 $ i128 `shiftL` erot + i128 `shiftR` (128 - erot)
+          where
+            erot
+              | rot < 0 = 128 - (abs rot `mod` 128)
+              | otherwise = rot `mod` 128
     toInteger128 (rotateL w128 rot) === expected
 
 prop_logical_rotate_right :: Property

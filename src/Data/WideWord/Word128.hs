@@ -360,7 +360,7 @@ shiftR128 w@(Word128 a1 a0) s
 rotateL128 :: Word128 -> Int -> Word128
 rotateL128 w@(Word128 a1 a0) r
   | r == 0 = w
-  | r < 0 = zeroWord128
+  | r < 0 = rotateL128 w (128 - (abs r `mod` 128))
   | r >= 128 = rotateL128 w (r `mod` 128)
   | r == 64 = Word128 a0 a1
   | r > 64 = rotateL128 (Word128 a0 a1) (r `mod` 64)

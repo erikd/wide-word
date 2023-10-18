@@ -448,7 +448,7 @@ shiftR256 w@(Word256 a3 a2 a1 a0) s
 {-# INLINABLE rotateL256 #-}
 rotateL256 :: Word256 -> Int -> Word256
 rotateL256 w@(Word256 a3 a2 a1 a0) r
-  | r < 0 = zeroWord256
+  | r < 0 = rotateL256 w (256 - (abs r `mod` 256))
   | r == 0 = w
   | r >= 256 = rotateL256 w (r `mod` 256)
   | r >= 64 = rotateL256 (Word256 a2 a1 a0 a3) (r - 64)
