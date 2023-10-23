@@ -208,6 +208,13 @@ prop_logical_rotate_right =
     rot <- H.forAll $ Gen.int (Range.linearFrom 0 (-20000) 20000)
     toInteger (rotateR (Int128 a1 a0) rot) === correctInt128 (toInteger $ rotateR (Word128 a1 a0) rot)
 
+prop_shift_opposite :: Property
+prop_shift_opposite =
+  propertyCount $ do
+    w128 <- H.forAll genInt128
+    rot <- H.forAll $ Gen.int (Range.linearFrom 0 (-150) 150)
+    shiftL w128 rot === shiftR w128 (negate rot)
+
 prop_testBit :: Property
 prop_testBit =
   propertyCount $ do
