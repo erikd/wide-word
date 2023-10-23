@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.6.0 -- 2023-10-24
+
+* Fixes for shifting/rotating by negative values.
+
 ## 0.1.5.0 -- 2023-01-14
 
 * Add Binary instances for Int128, Word128 and Word256.
