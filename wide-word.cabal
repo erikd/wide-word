@@ -41,7 +41,7 @@ library
 
   other-modules:       Data.WideWord.Compat
 
-  build-depends:       base                          >= 4.9         && < 4.20
+  build-depends:       base                          >= 4.9         && < 4.21
                      , binary                        >= 0.8.3.0     && < 0.9
                      , deepseq                       >= 1.4.2.0     && < 1.6
                      -- Required so that GHC.IntWord64 is available on 32 bit systems
@@ -79,7 +79,7 @@ test-suite laws
   hs-source-dirs:    test
 
   build-depends:       base
-                     , QuickCheck                    >= 2.9.2       && < 2.15
+                     , QuickCheck                    >= 2.9.2       && < 2.16
                      , quickcheck-classes            >= 0.6.3       && < 0.7.0
                      , primitive
                      , semirings                     >= 0.2         && < 0.8
