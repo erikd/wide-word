@@ -1,7 +1,8 @@
 packages:
   ./
 
-allow-newer: hedgehog:template-haskell
+allow-newer:
+  , *:base
 
 -- Build all tests by default
 tests: True
