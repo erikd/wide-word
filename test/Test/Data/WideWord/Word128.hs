@@ -3,11 +3,9 @@ module Test.Data.WideWord.Word128
   ( tests
   ) where
 
-import           Control.Exception (ArithException, SomeException, evaluate, try)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad (unless)
 
-import           Data.Bifunctor (first)
 import qualified Data.Binary as Binary
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
@@ -85,27 +83,14 @@ prop_read_show =
 prop_succ :: Property
 prop_succ =
   propertyCount $ do
-    w128 <- H.forAll genWord128
-    res <- liftIO (fmap toInteger128 <$> tryEvaluate (succ w128))
-    res === if w128 == maxBound
-              then Left "Enum.succ{Word128}: tried to take `succ' of maxBound"
-              else Right (succ $ toInteger128 w128)
+    w128 <- H.forAll $ Gen.filter (< maxBound) genWord128
+    toInteger128 (succ w128) === succ (toInteger128 w128)
 
 prop_pred :: Property
 prop_pred =
   propertyCount $ do
-    w128 <- H.forAll genWord128
-    res <- liftIO (fmap toInteger128 <$> tryEvaluate (pred w128))
-    res === if w128 == 0
-              then Left "Enum.pred{Word128}: tried to take `pred' of minBound"
-              else Right $ pred (toInteger128 w128)
-
-tryEvaluate :: a -> IO (Either String a)
-tryEvaluate x = do
-  first renderException <$> try (evaluate x)
-  where
-    renderException :: SomeException -> String
-    renderException = show
+    w128 <- H.forAll $ Gen.filter (> 0) genWord128
+    toInteger128 (pred w128) === pred (toInteger128 w128)
 
 prop_toEnum_fromEnum :: Property
 prop_toEnum_fromEnum =
@@ -382,9 +367,6 @@ correctWord128 i
 
 toInteger128 :: Word128 -> Integer
 toInteger128 = toInteger
-
-showArithException :: ArithException -> String
-showArithException = show
 
 -- -----------------------------------------------------------------------------
 

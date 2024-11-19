@@ -83,7 +83,7 @@ prop_succ =
 prop_pred :: Property
 prop_pred =
   propertyCount $ do
-    w64 <- H.forAll genWord64
+    w64 <- H.forAll $ Gen.filter (> 0) genWord64
     res <- liftIO (fmap toInteger64 <$> tryEvaluate (pred w64))
     res === if w64 == 0
               then Left "Enum.pred{Word64}: tried to take `pred' of minBound"
