@@ -25,7 +25,7 @@ extra-source-files:  ChangeLog.md
 stability:           provisional
 cabal-version:       >= 1.10
 tested-with:         GHC == 8.4.4, GHC == 8.6.5, GHC == 8.8.4, GHC == 8.10.7, GHC == 9.0.2,
-                     GHC == 9.2.4, GHC == 9.4.7, GHC == 9.6.2, GHC == 9.8.1
+                     GHC == 9.2.4, GHC == 9.4.7, GHC == 9.6.6, GHC == 9.8.2, GHC == 9.10.1
 
 library
   default-language:   Haskell2010
@@ -41,7 +41,7 @@ library
 
   other-modules:       Data.WideWord.Compat
 
-  build-depends:       base                          >= 4.9         && < 4.21
+  build-depends:       base                          >= 4.9         && < 4.22
                      , binary                        >= 0.8.3.0     && < 0.9
                      , deepseq                       >= 1.4.2.0     && < 1.6
                      -- Required so that GHC.IntWord64 is available on 32 bit systems
