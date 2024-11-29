@@ -5,7 +5,25 @@ constraints:
   , aeson >= 2
 
 allow-newer:
-  , *:base
+  , aeson:base
+  , assoc:base
+  , boring:base
+  , data-fix:base
+  , hashable:base
+  , indexed-traversable:base
+  , indexed-traversable-instances:base
+  , integer-conversion:base
+  , integer-logarithms:base
+  , OneTuple:base
+  , scientific:base
+  , semialign:base
+  , splitmix:base
+  , template-haskell:base
+  , text-short:base
+  , time-compat:base
+  , time-compat:time
+  , these:base
+  , unix:base
 
 -- Build all tests by default
 tests: True
