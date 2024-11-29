@@ -1,6 +1,9 @@
 packages:
   ./
 
+constraints:
+  , aeson >= 2
+
 allow-newer:
   , *:base
 
