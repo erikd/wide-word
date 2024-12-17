@@ -1,32 +1,43 @@
 packages:
   ./
 
-constraints:
-  , aeson >= 2
-
-allow-newer:
-  , aeson:base
-  , assoc:base
-  , boring:base
-  , data-fix:base
-  , hashable:base
-  , indexed-traversable:base
-  , indexed-traversable-instances:base
-  , integer-conversion:base
-  , integer-logarithms:base
-  , OneTuple:base
-  , scientific:base
-  , semialign:base
-  , splitmix:base
-  , template-haskell:base
-  , text-short:base
-  , time-compat:base
-  , time-compat:time
-  , these:base
-  , unix:base
-
 -- Build all tests by default
 tests: True
 
 -- Show test output by default
 test-show-details: direct
+
+if impl (ghc >= 9.12)
+  constraints:
+    , aeson >= 2
+  
+  allow-newer:
+    , aeson:base
+    , aeson:deepseq
+    , aeson:ghc-prim
+    , aeson:template-haskell
+    , assoc:base
+    , boring:base
+    , data-fix:base
+    , hashable:base
+    , hedgehog:template-haskell
+    , indexed-traversable:base
+    , indexed-traversable-instances:base
+    , integer-conversion:base
+    , integer-logarithms:base
+    , integer-logarithms:ghc-prim
+    , OneTuple:base
+    , scientific:base
+    , scientific:template-haskell
+    , semialign:base
+    , splitmix:base
+    , template-haskell:base
+    , text-short:base
+    , text-short:ghc-prim
+    , text-short:template-haskell
+    , time-compat:base
+    , time-compat:time
+    , these:base
+    , unix:base
+    , unordered-containers:template-haskell
+    , uuid-types:template-haskell
