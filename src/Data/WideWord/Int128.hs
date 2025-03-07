@@ -234,7 +234,14 @@ toWord32 (Int128 _ w) = fromIntegral w
 -- Functions for `Ord` instance.
 
 compare128 :: Int128 -> Int128 -> Ordering
-compare128 a b = compare (toInteger128 a) (toInteger128 b)
+compare128 (Int128 a1 a0) (Int128 b1 b0)
+  | aIsNeg == bIsNeg = compare a1 b1 <> compare a0 b0
+  | bIsNeg = GT
+  | otherwise = LT
+  where
+    aIsNeg = isNeg a1
+    bIsNeg = isNeg b1
+    isNeg = (>= 0x8000000000000000)
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Enum` instance.
