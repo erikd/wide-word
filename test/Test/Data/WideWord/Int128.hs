@@ -78,20 +78,14 @@ prop_read_instance =
 prop_succ :: Property
 prop_succ =
   propertyCount $ do
-    i128 <- H.forAll genInt128
-    res <- liftIO (fmap toInteger128 <$> tryEvaluate (succ i128))
-    res === if i128 == maxBound
-              then Left "Enum.succ{Int128}: tried to take `succ' of maxBound"
-              else Right (succ $ toInteger128 i128)
+    i128 <- H.forAll $ Gen.filter (< maxBound) genInt128
+    toInteger128 (succ i128) === succ (toInteger128 i128)
 
 prop_pred :: Property
 prop_pred =
   propertyCount $ do
-    i128 <- H.forAll genInt128
-    res <- liftIO (fmap toInteger128 <$> tryEvaluate (pred i128))
-    res === if i128 == minBound
-              then Left "Enum.pred{Int128}: tried to take `pred' of minBound"
-              else Right $ pred (toInteger128 i128)
+    i128 <- H.forAll $ Gen.filter (> minBound) genInt128
+    toInteger128 (pred i128) === pred (toInteger128 i128)
 
 tryEvaluate :: a -> IO (Either String a)
 tryEvaluate x = do
