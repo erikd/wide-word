@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.7.0 -- 2025-03-07
+
+* Improvements to compare128 for Int128.
+
 ## 0.1.6.0 -- 2023-10-24
 
 * Fixes for shifting/rotating by negative values.
