@@ -1,5 +1,11 @@
 # Revision history for wide-word
 
+## 0.1.7.1 -- 2025-06-19
+
+* Publish a new version removing an `if` conditional from the cabal
+  file.
+* Update `tested-with` versions in cabal file.
+
 ## 0.1.7.0 -- 2025-03-07
 
 * Improvements to compare128 for Int128.
