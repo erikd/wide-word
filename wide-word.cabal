@@ -80,7 +80,7 @@ test-suite laws
   hs-source-dirs:    test
 
   build-depends:       base
-                     , QuickCheck                    >= 2.9.2       && < 2.16
+                     , QuickCheck                    >= 2.9.2       && < 2.17
                      , quickcheck-classes            >= 0.6.3       && < 0.7.0
                      , primitive
                      , semirings                     >= 0.2         && < 0.8
