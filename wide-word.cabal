@@ -42,7 +42,7 @@ library
 
   other-modules:       Data.WideWord.Compat
 
-  build-depends:       base                          >= 4.9         && < 4.22
+  build-depends:       base                          >= 4.9         && < 4.23
                      , binary                        >= 0.8.3.0     && < 0.9
                      , deepseq                       >= 1.4.2.0     && < 1.6
                      -- Required so that GHC.IntWord64 is available on 32 bit systems
