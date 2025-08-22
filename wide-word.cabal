@@ -63,7 +63,6 @@ test-suite test
 
   build-depends:       base
                      , binary
-                     , bytestring                    >= 0.10 && < 0.13
                      , hedgehog                      >= 1.0 && < 1.6
                      , primitive
                      , wide-word
