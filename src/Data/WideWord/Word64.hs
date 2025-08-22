@@ -44,7 +44,7 @@ import Data.Bits (shiftL, shiftR)
 import Data.WideWord.Compat
 
 #if WORD_SIZE_IN_BITS == 32
-import GHC.Prim (Word#, Word64#, uncheckedShiftRL64#, word64ToWord#, wordToWord32#)
+import GHC.Exts (Word#, Word64#, uncheckedShiftRL64#, word64ToWord#, wordToWord32#)
 #endif
 
 import GHC.Word (Word32 (..), Word64 (..))
