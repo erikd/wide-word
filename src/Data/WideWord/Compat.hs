@@ -28,7 +28,7 @@ module Data.WideWord.Compat
 
 #if MIN_VERSION_base(4,17,0)
 import qualified GHC.Base
-import GHC.Prim (Word64#, wordToWord64#, word64ToWord#, Int64#)
+import GHC.Exts (Word64#, wordToWord64#, word64ToWord#, Int64#)
 #else
 import GHC.Base (Int#, Word#, quotRemWord2#, int2Word#, subWordC#, plusWord2#, or#, minusWord#,
         timesWord2#, word2Int#, xor#, and#, not#, plusWord#, timesWord#)
