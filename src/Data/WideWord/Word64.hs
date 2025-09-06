@@ -126,8 +126,6 @@ subCarryDiff :: Word64 -> Word64 -> (Word64, Word64)
 subCarryDiff (W64# a) (W64# b) =
     (mkWord64 0 (W32# (word64ToWord32# c2)), mkWord64 (W32# (word64ToWord32# d1)) (W32# (word64ToWord32# d0)))
   where
-    !(# a1, a0 #) = (# word64ToHiWord# a, word64ToWord# a #)
-    !(# b1, b0 #) = (# word64ToHiWord# b, word64ToWord# b #)
     !(# d0, c1 #) = subWordC# a b
     !(# d1a, c2a #) = subWordC# a (int2Word# c1)
     !(# d1, c2b #) = subWordC# d1a b
@@ -160,6 +158,7 @@ timesCarryProd (W64# a) (W64# b) =
 word64ToHiWord# :: Word64# -> Word#
 word64ToHiWord# w = word64ToWord# (w `uncheckedShiftRL64#` 32#)
 
+{-# INLINE word64ToWord32# #-}
 word64ToWord32# :: Word64# -> Word32#
 word64ToWord32# w =  wordToWord32# (word64ToWord# w)
 
