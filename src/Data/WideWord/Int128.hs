@@ -1,6 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -33,7 +32,6 @@ module Data.WideWord.Int128
 import Control.DeepSeq (NFData (..))
 
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
-import Data.Data (Data, Typeable)
 import Data.Ix (Ix)
 #if ! MIN_VERSION_base(4,11,0)
 import Data.Semigroup ((<>))
@@ -70,7 +68,7 @@ data Int128 = Int128
   { int128Hi64 :: !Word64
   , int128Lo64 :: !Word64
   }
-  deriving (Eq, Data, Generic, Ix, Typeable)
+  deriving (Eq, Generic, Ix)
 
 instance Hashable Int128 where
   hashWithSalt s (Int128 a1 a2) = s `hashWithSalt` a1 `hashWithSalt` a2
