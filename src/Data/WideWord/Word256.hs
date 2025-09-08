@@ -297,25 +297,16 @@ plus256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
 {-# INLINABLE minus256 #-}
 minus256 :: Word256 -> Word256 -> Word256
 minus256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
-    Word256 s3 s2 s1 s0
+    Word256 d3 d2 d1 d0
   where
-    !(v1, s0) = subCarryDiff a0 b0
-    !(v2, s1) =
-      if v1 == 0
-        then subCarryDiff a1 b1
-        else if a1 == 0
-          then (0xFFFFFFFFFFFFFFFF - b1, 1)
-          else subCarryDiff (a1 - 1) b1
-    !(v3, s2) =
-      if v2 == 0
-        then subCarryDiff a2 b2
-        else if a1 == 0
-          then (0xFFFFFFFFFFFFFFFF - b2, 1)
-          else subCarryDiff (a2 - 1) b2
-    !s3 =
-      if v3 == 0
-        then a3 - b3
-        else (a3 - 1) - b3
+    !(c1, d0) = subCarryDiff a0 b0
+    !(c2a, b1a) = plusCarrySum b1 c1
+    !(c2b, d1) = subCarryDiff a1 b1a
+    !c2 = c2a + c2b
+    !(c3a, b2a) = plusCarrySum b2 c2
+    !(c3b, d2) = subCarryDiff a2 b2a
+    !c3 = c3a + c3b
+    !d3 = a3 - b3 - c3
 
 times256 :: Word256 -> Word256 -> Word256
 times256 (Word256 a3 a2 a1 a0) (Word256 b3 b2 b1 b0) =
@@ -441,7 +432,8 @@ shiftR256 w@(Word256 a3 a2 a1 a0) s
         (a1 `shiftR` (s - 64) + a2 `shiftL` (128 - s))
   | s == 64 = Word256 0 a3 a2 a1
   | otherwise =
-      Word256 (a3 `shiftR` s)
+      Word256
+        (a3 `shiftR` s)
         (a2 `shiftR` s + a3 `shiftL` (64 - s))
         (a1 `shiftR` s + a2 `shiftL` (64 - s))
         (a0 `shiftR` s + a1 `shiftL` (64 - s))
@@ -449,21 +441,27 @@ shiftR256 w@(Word256 a3 a2 a1 a0) s
 {-# INLINABLE rotateL256 #-}
 rotateL256 :: Word256 -> Int -> Word256
 rotateL256 w@(Word256 a3 a2 a1 a0) r
-  | r < 0 = rotateL256 w (256 - (abs r `mod` 256))
+  | r < 0 = rotateR256 w ((abs r) `mod` 256)
   | r == 0 = w
   | r >= 256 = rotateL256 w (r `mod` 256)
+  | r >= 192 = rotateL256 (Word256 a0 a3 a2 a1) (r - 192)
+  | r >= 128 = rotateL256 (Word256 a1 a0 a3 a2) (r - 128)
   | r >= 64 = rotateL256 (Word256 a2 a1 a0 a3) (r - 64)
   | otherwise =
       Word256
-        (a3 `shiftL` r + a2 `shiftR` (64 - r)) (a2 `shiftL` r + a1 `shiftR` (64 - r))
-        (a1 `shiftL` r + a0 `shiftR` (64 - r)) (a0 `shiftL` r + a3 `shiftR` (64 - r))
+        (a3 `shiftL` r + a2 `shiftR` (64 - r))
+        (a2 `shiftL` r + a1 `shiftR` (64 - r))
+        (a1 `shiftL` r + a0 `shiftR` (64 - r))
+        (a0 `shiftL` r + a3 `shiftR` (64 - r))
 
 {-# INLINABLE rotateR256 #-}
 rotateR256 :: Word256 -> Int -> Word256
 rotateR256 w@(Word256 a3 a2 a1 a0) r
-  | r < 0 = rotateR256 w (256 - (abs r `mod` 256))
+  | r < 0 = rotateL256 w ((abs r) `mod` 256)
   | r == 0 = w
   | r >= 256 = rotateR256 w (r `mod` 256)
+  | r >= 192 = rotateR256 (Word256 a2 a1 a0 a3) (r - 192)
+  | r >= 128 = rotateR256 (Word256 a1 a0 a3 a2) (r - 128)
   | r >= 64 = rotateR256 (Word256 a0 a3 a2 a1) (r - 64)
   | otherwise =
       Word256
