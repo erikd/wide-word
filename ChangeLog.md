@@ -1,5 +1,10 @@
 # Revision history for wide-word
 
+## 0.1.8.0 -- 2025-09-08
+
+* Fix bug in Word256 implementions (minus).
+* Add property tests for Word256.
+
 ## 0.1.7.1 -- 2025-06-19
 
 * Publish a new version removing an `if` conditional from the cabal
