@@ -241,6 +241,8 @@ prop_bit =
           | idx >= 128 = 0
           | otherwise = bit idx
     toInteger128 (bit idx :: Word128) === expected
+    unless (expected == 0) $
+      toInteger128 ((bit idx :: Word128) - 1) === expected - 1
 
 prop_popCount :: Property
 prop_popCount =

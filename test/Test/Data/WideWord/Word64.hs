@@ -226,6 +226,7 @@ prop_bit =
     -- Actually testing the default compiler/machine implementation so range must be valid.
     idx <- H.forAll $ Gen.int (Range.linear 0 63)
     toInteger64 (bit idx :: Word64) === (bit idx :: Integer)
+    toInteger64 ((bit idx :: Word64) - 1) === ((bit idx - 1) :: Integer)
 
 prop_popCount :: Property
 prop_popCount =
@@ -376,6 +377,18 @@ prop_subCarryDiff =
     if a >= b
       then (carry, toInteger64 d) === (0, toInteger64 a - toInteger64 b)
       else (carry, toInteger64 d) === (1, 1 + fromIntegral (maxBound :: Word64) - toInteger64 b + toInteger64 a)
+
+prop_subDiffCarry_ok :: Property
+prop_subDiffCarry_ok =
+  propertyCount $ do
+    a <- H.forAll genBiasedWord64
+    b <- H.forAll genBiasedWord64
+    let (actualC, actualD) = subCarryDiff a b
+    let (expectedC, expectedD) =
+          if (a >= b)
+            then (zeroWord64, a - b)
+            else (oneWord64, a + maxBound + 1 - b)
+    (actualC, actualD) === (expectedC, expectedD)
 
 -- -----------------------------------------------------------------------------
 
