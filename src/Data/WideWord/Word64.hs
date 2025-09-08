@@ -28,6 +28,7 @@
 
 module Data.WideWord.Word64
   ( mkWord64
+  , oneWord64
   , plusCarrySum
   , quotRem2Word64
   , showHexWord64
@@ -66,6 +67,10 @@ word64Hi32 w = fromIntegral (w `shiftR` 32)
 word64Lo32 :: Word64 -> Word32
 word64Lo32 = fromIntegral
 
+{-# INLINE oneWord64 #-}
+oneWord64 :: Word64
+oneWord64 = 1
+
 {-# INLINE zeroWord64 #-}
 zeroWord64 :: Word64
 zeroWord64 = 0
@@ -86,8 +91,8 @@ quotRem2Word64 (W64# n1) (W64# n0) (W64# d) =
 {-# INLINE subCarryDiff #-}
 subCarryDiff :: Word64 -> Word64 -> (Word64, Word64)
 subCarryDiff (W64# a) (W64# b) =
-  let !(# s, c #) = subWordC# a b
-   in (W64# (int2Word# c), W64# s)
+  let !(# d, c #) = subWordC# a b
+   in (W64# (int2Word# c), W64# d)
 
 {-# INLINE timesCarryProd #-}
 timesCarryProd :: Word64 -> Word64 -> (Word64, Word64)
