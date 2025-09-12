@@ -1,5 +1,9 @@
 # Revision history for wide-word
 
+## 0.1.8.1 -- 2025-??-??
+
+* Reintroduce Data instances.
+
 ## 0.1.8.0 -- 2025-09-08
 
 * Fix bug in Word256 implementions (minus).
