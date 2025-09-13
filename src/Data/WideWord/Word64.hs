@@ -124,12 +124,17 @@ quotRem2Word64 n1 n0 d =
 {-# INLINE subCarryDiff #-}
 subCarryDiff :: Word64 -> Word64 -> (Word64, Word64)
 subCarryDiff (W64# a) (W64# b) =
-    (mkWord64 0 (W32# (word64ToWord32# c2)), mkWord64 (W32# (word64ToWord32# d1)) (W32# (word64ToWord32# d0)))
+    (mkWord64 0 (W32# (wordToWord32# c2)), mkWord64 (W32# (wordToWord32# d1)) (W32# (wordToWord32# d0)))
   where
-    !(# d0, c1 #) = subWordC# a b
-    !(# d1a, c2a #) = subWordC# a (int2Word# c1)
-    !(# d1, c2b #) = subWordC# d1a b
-    !c2 = plusWord# (int2Word# c2a) (int2Word# c2b)
+    !(# a1, a0 #) = (# word64ToHiWord# a, word64ToWord# a #)
+    !(# b1, b0 #) = (# word64ToHiWord# b, word64ToWord# b #)
+    !(# d0, c1 #) = subWordC# a0 b0
+    !(# c2a, b1a #) = plusWord2# b1 (int2Word# c1)
+    !(# d1, c2b #) = subWordC# a1 b1a
+    !c2 = plusWord# c2a (int2Word# c2b)
+
+-- plusWord2# :: Word# -> Word# -> (# Word#, Word# #)
+-- subWordC# :: Word# -> Word# -> (# Word#, Int# #)
 
 {-# INLINE timesCarryProd #-}
 timesCarryProd :: Word64 -> Word64 -> (Word64, Word64)
