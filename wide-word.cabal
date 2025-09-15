@@ -61,7 +61,7 @@ test-suite test256
 
   build-depends:       base
                      , binary
-                     , hedgehog                      >= 1.0 && < 1.6
+                     , hedgehog                      >= 1.0 && < 1.7
                      , primitive
                      , wide-word
 
@@ -79,7 +79,7 @@ test-suite test128
 
   build-depends:       base
                      , binary
-                     , hedgehog                      >= 1.0 && < 1.6
+                     , hedgehog                      >= 1.0 && < 1.7
                      , primitive
                      , wide-word
 
@@ -96,7 +96,7 @@ test-suite test64
 
   build-depends:       base
                      , binary
-                     , hedgehog                      >= 1.0 && < 1.6
+                     , hedgehog                      >= 1.0 && < 1.7
                      , primitive
                      , wide-word
 
