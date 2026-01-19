@@ -8,6 +8,7 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module Data.WideWord.Int256
   ( Int256 (..)
+  , byteSwapInt256
   , showHexInt256
   , zeroInt256
   ) where
@@ -32,7 +33,7 @@ import GHC.Enum (predError, succError)
 import GHC.Exts ((*#), (+#), Int#, State#, Addr#, ByteArray#, MutableByteArray#)
 import GHC.Generics
 import GHC.Real ((%))
-import GHC.Word (Word32, Word64)
+import GHC.Word (Word32, Word64, byteSwap64)
 
 import Data.Primitive.Types (Prim (..), defaultSetByteArray#, defaultSetOffAddr#)
 
@@ -58,6 +59,9 @@ instance Hashable Int256 where
 instance Binary Int256 where
   put (Int256 a1 a2 a3 a4) = put a1 >> put a2 >> put a3 >> put a4
   get = Int256 <$> get <*> get <*> get <*> get
+
+byteSwapInt256 :: Int256 -> Int256
+byteSwapInt256 (Int256 a3 a2 a1 a0) = Int256 (byteSwap64 a0) (byteSwap64 a1) (byteSwap64 a2) (byteSwap64 a3)
 
 showHexInt256 :: Int256 -> String
 showHexInt256 (Int256 a3 a2 a1 a0)
@@ -413,10 +417,11 @@ shiftL256 w@(Int256 a3 a2 a1 a0) s
 
 {-# INLINABLE shiftR256 #-}
 shiftR256 :: Int256 -> Int -> Int256
-shiftR256 w@(Int256 a3 a2 a1 a0) s
-  | s == 0 = w
+shiftR256 i@(Int256 a3 a2 a1 a0) s
+  | s == 0 = i
   | s == minBound = zeroInt256
-  | s < 0 = shiftL256 w (negate s)
+  | s < 0 = shiftL256 i (negate s)
+  | topBitSetWord64 a3 = complement256 (shiftR256 (complement256 i) s)
   | s >= 256 = zeroInt256
   | s > 192 = Int256 0 0 0 (a3 `shiftR` (s - 192))
   | s == 192 = Int256 0 0 0 a3
@@ -575,6 +580,13 @@ pokeElemOff256 ptr idx (Int256 a3 a2 a1 a0) = do
     pokeElemOff (castPtr ptr) (idx2 + index3) a3
   where
     idx2 = 4 * idx
+
+-- -----------------------------------------------------------------------------
+-- Helpers.
+
+{-# INLINE topBitSetWord64 #-}
+topBitSetWord64 :: Word64 -> Bool
+topBitSetWord64 w = testBit w 63
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Prim` instance.

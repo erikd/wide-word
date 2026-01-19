@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Test.Data.WideWord.Word256
+module Test.Data.WideWord.Int256
   ( tests
   ) where
 
@@ -37,18 +37,15 @@ prop_constructor_and_accessors =
     let w256 = Int256 hi m1 m0 lo
     (int256hi w256, int256m1 w256, int256m0 w256, int256lo w256) === (hi, m1, m0, lo)
 
-{-
 prop_byte_swap :: Property
 prop_byte_swap =
   propertyCount $ do
-    h <- H.forAll genWor256
-    l <- H.forAll $ Gen.filter (/= h) genWord256
-    let w256 = Word256 (word256Hi64 h) (word256Lo64 h) (word256Hi64 l) (word256Lo64 l)
-        swapped = byteSwapWord256 w256
-    (byteSwapWord256 swapped)
-            === (w256)
--}
-
+    h <- H.forAll genInt256
+    l <- H.forAll $ Gen.filter (/= h) genInt256
+    let i256 = Int256 (int256hi h) (int256m0 h) (int256m1 l) (int256lo l)
+        swapped = byteSwapInt256 i256
+    (byteSwapInt256 swapped)
+            === (i256)
 
 prop_derivied_eq_instance :: Property
 prop_derivied_eq_instance =
@@ -117,7 +114,6 @@ prop_subtraction =
         expected = ai + (1 `shiftL` 256) - bi
     toInteger256 (a - b) === correctInt256 expected
 
-
 prop_multiplication :: Property
 prop_multiplication =
   propertyCount $ do
@@ -170,8 +166,9 @@ prop_bitwise_xor =
 prop_complement :: Property
 prop_complement =
   propertyCount $ do
-    (a3, a2, a1, a0) <- H.forAll $ (,,,) <$> genWord64 <*> genWord64 <*> genWord64 <*> genWord64
-    toInteger256 (complement $ Int256 a3 a2 a1 a0) === mkInteger (complement a3) (complement a2) (complement a1) (complement a0)
+    i256 <- H.forAll genWord256
+    H.assert $ complement i256 /= i256
+    complement (complement i256) === i256
 
 prop_logical_shift_left :: Property
 prop_logical_shift_left =
@@ -192,14 +189,15 @@ prop_logical_rotate_left =
   propertyCount $ do
     (a3, a2, a1, a0) <- H.forAll $ (,,,) <$> genBiasedWord64 <*> genBiasedWord64 <*> genBiasedWord64 <*> genBiasedWord64
     rot <- H.forAll $ Gen.int (Range.linearFrom 0 (-300) 300)
-    toInteger (rotateL (Int256 a3 a2 a1 a0) rot) === correctInt256 (toInteger $ rotateR (Int256 a3 a2 a1 a0) rot)
+    toInteger (rotateL (Int256 a3 a2 a1 a0) rot) === correctInt256 (toInteger $ rotateL (Word256 a3 a2 a1 a0) rot)
 
 prop_logical_rotate_right :: Property
 prop_logical_rotate_right =
   propertyCount $ do
     (a3, a2, a1, a0) <- H.forAll $ (,,,) <$> genBiasedWord64 <*> genBiasedWord64 <*> genBiasedWord64 <*> genBiasedWord64
     rot <- H.forAll $ Gen.int (Range.linearFrom 0 (-300) 300)
-    toInteger (rotateR (Int256 a3 a2 a1 a0) rot) === correctInt256 (toInteger $ rotateR (Int256 a3 a2 a1 a0) rot)
+    toInteger (rotateR (Int256 a3 a2 a1 a0) rot) === correctInt256 (toInteger $ rotateR (Word256 a3 a2 a1 a0) rot)
+
 prop_shift_opposite :: Property
 prop_shift_opposite =
   propertyCount $ do
@@ -218,7 +216,6 @@ prop_testBit =
           | otherwise = testBit (toInteger256 i256) idx
     testBit i256 idx === expected
 
-
 prop_bit :: Property
 prop_bit =
   propertyCount $ do
@@ -230,7 +227,6 @@ prop_bit =
           | idx == 255 = toInteger256 (minBound :: Int256)
           | otherwise = bit idx
     toInteger256 (bit idx :: Int256) === expected
-
 
 prop_popCount :: Property
 prop_popCount =
