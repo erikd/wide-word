@@ -12,6 +12,10 @@ genInt128 :: Gen Int128
 genInt128 =
   Int128 <$> genBiasedWord64 <*> genBiasedWord64
 
+genInt256 :: Gen Int256
+genInt256 =
+  Int256 <$> genBiasedWord64 <*> genBiasedWord64 <*> genBiasedWord64 <*> genBiasedWord64
+
 genWord256 :: Gen Word256
 genWord256 =
   Word256 <$> genBiasedWord64 <*> genBiasedWord64 <*> genBiasedWord64 <*> genBiasedWord64

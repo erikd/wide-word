@@ -36,6 +36,7 @@ library
 
   exposed-modules:     Data.WideWord
                        Data.WideWord.Int128
+                       Data.WideWord.Int256
                        Data.WideWord.Word64
                        Data.WideWord.Word128
                        Data.WideWord.Word256
@@ -58,6 +59,7 @@ test-suite test256
 
   other-modules:      Test.Data.WideWord.Gen
                       Test.Data.WideWord.Word256
+                      Test.Data.WideWord.Int256
 
   build-depends:       base
                      , binary
