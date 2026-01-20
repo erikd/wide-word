@@ -22,6 +22,8 @@
 ---- "modulo 2^256" result as one would expect from a fixed width unsigned word.
 -------------------------------------------------------------------------------
 
+#include <MachDeps.h>
+
 module Data.WideWord.Word256
   ( Word256 (..)
   , showHexWord256
@@ -660,7 +662,7 @@ unInt (I# i#) = i#
 
 -- Use these indices to get the peek/poke ordering endian correct.
 index0, index1, index2, index3 :: Int
-#if WORDS_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
 index0 = 3
 index1 = 2
 index2 = 1

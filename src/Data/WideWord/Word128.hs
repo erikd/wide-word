@@ -589,7 +589,7 @@ unInt (I# i#) = i#
 
 -- Use these indices to get the peek/poke ordering endian correct.
 index0, index1 :: Int
-#if WORDS_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
 index0 = 1
 index1 = 0
 #else
