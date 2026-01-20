@@ -22,6 +22,8 @@
 ---- "modulo 2^128" result as one would expect from a fixed width unsigned word.
 -------------------------------------------------------------------------------
 
+#include <MachDeps.h>
+
 module Data.WideWord.Int128
   ( Int128 (..)
   , byteSwapInt128
@@ -591,7 +593,7 @@ unInt :: Int -> Int#
 unInt (I# i#) = i#
 
 index0, index1 :: Int
-#if WORDS_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
 index0 = 1
 index1 = 0
 #else
