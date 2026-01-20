@@ -21,6 +21,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: Test
       run: |
+        export LANG=C.UTF-8
         source ~/.ghcup/env
         cabal update
         cabal test --test-show-details=direct --enable-tests

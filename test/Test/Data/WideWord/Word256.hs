@@ -4,11 +4,11 @@ module Test.Data.WideWord.Word256
   ) where
 
 import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad (unless)
+import           Control.Monad (unless, when)
 
 import qualified Data.Binary as Binary
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
-                            , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
+                            , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor, finiteBitSize)
 import           Data.Primitive.PrimArray
 import           Data.Primitive.Ptr
 import           Data.Word (Word64, Word8)
@@ -99,8 +99,11 @@ prop_toEnum_fromEnum =
     a0 <- H.forAll genWord32
     let w256 = Word256 0 0 0 (fromIntegral a0)
         e256 = fromEnum w256
-    toInteger e256 === toInteger a0
-    toInteger256 (toEnum e256 :: Word256) === toInteger a0
+    -- On 32-bit architecture `a0` can exceed maxBound :: Int32
+    -- making fromEnum illegal. So limiting this test to 64-bit.
+    when (finiteBitSize (0 :: Word) == 64) $ do
+      toInteger e256 === toInteger a0
+      toInteger256 (toEnum e256 :: Word256) === toInteger a0
 
 prop_addition :: Property
 prop_addition =

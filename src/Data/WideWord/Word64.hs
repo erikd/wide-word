@@ -1,8 +1,10 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
 -----------------------------------------------------------------------------
@@ -41,10 +43,10 @@ module Data.WideWord.Word64
 
 import Data.Bits (shiftL, shiftR)
 
-import Data.WideWord.Compat
-
 #if WORD_SIZE_IN_BITS == 32
-import GHC.Prim (Word#, Word64#, uncheckedShiftRL64#, word64ToWord#, wordToWord32#)
+import GHC.Exts (Word#, Word64#, uncheckedShiftRL64#, word64ToWord#)
+#else
+import Data.WideWord.Compat
 #endif
 
 import GHC.Word (Word32 (..), Word64 (..))
@@ -104,15 +106,9 @@ timesCarryProd (W64# a) (W64# b) =
 
 {-# INLINE plusCarrySum #-}
 plusCarrySum :: Word64 -> Word64 -> (Word64, Word64)
-plusCarrySum (W64# a) (W64# b) =
-    (mkWord64 0 (W32# (wordToWord32# c2)), mkWord64 (W32# (wordToWord32# s1)) (W32# (wordToWord32# s0)))
+plusCarrySum a b = (if ab < a then 1 else 0, ab)
   where
-    !(# a1, a0 #) = (# word64ToHiWord# a, word64ToWord# a #)
-    !(# b1, b0 #) = (# word64ToHiWord# b, word64ToWord# b #)
-    !(# c1, s0 #) = plusWord2# a0 b0
-    !(# c2a, s1a #) = plusWord2# b1 c1
-    !(# c2b, s1 #) = plusWord2# a1 s1a
-    !c2 = plusWord# c2a c2b
+    ab = a + b
 
 quotRem2Word64 :: Word64 -> Word64 -> Word64 -> (Word64, Word64)
 quotRem2Word64 n1 n0 d =
@@ -123,42 +119,29 @@ quotRem2Word64 n1 n0 d =
 
 {-# INLINE subCarryDiff #-}
 subCarryDiff :: Word64 -> Word64 -> (Word64, Word64)
-subCarryDiff (W64# a) (W64# b) =
-    (mkWord64 0 (W32# (wordToWord32# c2)), mkWord64 (W32# (wordToWord32# d1)) (W32# (wordToWord32# d0)))
+subCarryDiff a b = (if ab > a then 1 else 0, ab)
   where
-    !(# a1, a0 #) = (# word64ToHiWord# a, word64ToWord# a #)
-    !(# b1, b0 #) = (# word64ToHiWord# b, word64ToWord# b #)
-    !(# d0, c1 #) = subWordC# a0 b0
-    !(# d1a, c2a #) = subWordC# a1 (int2Word# c1)
-    !(# d1, c2b #) = subWordC# d1a b1
-    !c2 = plusWord# (int2Word# c2a) (int2Word# c2b)
+    ab = a - b
+
+pattern W64 :: Word32 -> Word32 -> Word64
+pattern W64 hi lo <- ((\x -> (word64Hi32 x, word64Lo32 x)) -> (hi, lo))
+  where
+    W64 hi lo = mkWord64 hi lo
+{-# COMPLETE W64 #-}
 
 {-# INLINE timesCarryProd #-}
 timesCarryProd :: Word64 -> Word64 -> (Word64, Word64)
-timesCarryProd (W64# a) (W64# b) =
-    (mkWord64 (W32# (wordToWord32# p3)) (W32# (wordToWord32# p2)), mkWord64 (W32# (wordToWord32# p1)) (W32# (wordToWord32# p0)))
+timesCarryProd (W64 a1 a0) (W64 b1 b0) = (W64 p3 p2, W64 p1 p0)
   where
-    !(# a1, a0 #) = (# word64ToHiWord# a, word64ToWord# a #)
-    !(# b1, b0 #) = (# word64ToHiWord# b, word64ToWord# b #)
+    W64 c00 p00 = fromIntegral a0 * fromIntegral b0
+    W64 c01 p01 = fromIntegral a0 * fromIntegral b1
+    W64 c10 p10 = fromIntegral a1 * fromIntegral b0
+    W64 c11 p11 = fromIntegral a1 * fromIntegral b1
 
-    !(# c1a, p0 #) = timesWord2# a0 b0
-
-    !(# c2a, p1a #) = timesWord2# a1 b0
-    !(# c2b, p1b #) = timesWord2# a0 b1
-    !(# c2c, p1c #) = plusWord2# p1a p1b
-    !(# c2d, p1 #) = plusWord2# p1c c1a
-
-    !(# c3a, p2a #) = timesWord2# a1 b1
-    !(# c3b, p2b #) = plusWord2# p2a c2a
-    !(# c3c, p2c #) = plusWord2# p2b c2b
-    !(# c3d, p2d #) = plusWord2# p2c c2c
-    !(# c3e, p2 #) = plusWord2# p2d c2d
-
-    !p3 = c3a `plusWord#` c3b `plusWord#` c3c `plusWord#` c3d `plusWord#` c3e
-
-{-# INLINE word64ToHiWord# #-}
-word64ToHiWord# :: Word64# -> Word#
-word64ToHiWord# w = word64ToWord# (w `uncheckedShiftRL64#` 32#)
+    p0 = p00
+    W64 c1 p1 = fromIntegral c00 + fromIntegral p01 + fromIntegral p10
+    W64 c2 p2 = fromIntegral c01 + fromIntegral c10 + fromIntegral p11 + fromIntegral c1
+    p3 = c11 + c2
 
 #else
 
