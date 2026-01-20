@@ -1,0 +1,43 @@
+name: emulated
+on:
+  - push
+  - pull_request
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Emulation is incredibly slow and memory demanding. It seems that any
+  # executable with GHC RTS takes at least 7-8 Gb of RAM, so we can run
+  # `cabal` or `ghc` on their own, but cannot run them both at the same time,
+  # striking out `cabal test`. Instead we rely on system packages and invoke
+  # `ghc --make` manually, and even so `ghc -O` is prohibitively expensive.
+  emulated:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        arch: ['s390x']
+    steps:
+    - uses: actions/checkout@v4
+    - uses: uraimo/run-on-arch-action@v3
+      timeout-minutes: 60
+      with:
+        arch: ${{ matrix.arch }}
+        distro: ubuntu_rolling
+        githubToken: ${{ github.token }}
+        install: |
+          apt-get update -y
+          apt-get install -y ghc libghc-hedgehog-dev libghc-quickcheck-classes-dev
+        run: |
+          export LANG=C.UTF-8
+          ghc --version
+          ghc --make -XGHC2021 -isrc:test -o test64 test/test64.hs +RTS -s
+          ./test64 +RTS -s
+          ghc --make -XGHC2021 -isrc:test -o test128 test/test128.hs +RTS -s
+          ./test128 +RTS -s
+          ghc --make -XGHC2021 -isrc:test -o test256 test/test256.hs +RTS -s
+          ./test256 +RTS -s
+          ghc --make -XGHC2021 -isrc:test -o laws test/laws.hs +RTS -s
+          ./laws +RTS -s
