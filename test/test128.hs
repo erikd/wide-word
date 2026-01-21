@@ -1,9 +1,10 @@
-import           Control.Monad (unless)
+{-# LANGUAGE ImportQualifiedPost #-}
+import Control.Monad (unless)
 
-import           System.Exit (exitFailure)
+import System.Exit (exitFailure)
 
-import qualified Test.Data.WideWord.Int128
-import qualified Test.Data.WideWord.Word128
+import Test.Data.WideWord.Int128 qualified
+import Test.Data.WideWord.Word128 qualified
 
 main :: IO ()
 main = runTests
