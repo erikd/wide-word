@@ -1,29 +1,30 @@
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Test.Data.WideWord.Word64
   ( tests
   ) where
 
-import           Control.Exception (ArithException, SomeException, evaluate, try)
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad (unless)
+import Control.Exception (ArithException, SomeException, evaluate, try)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad (unless)
 
-import           Data.Bifunctor (first)
-import qualified Data.Binary as Binary
-import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
+import Data.Bifunctor (first)
+import Data.Binary qualified as Binary
+import Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
-import           Data.Primitive.PrimArray
-import           Data.Primitive.Ptr
-import           Data.Word (Word8, Word64, byteSwap64)
-import           Data.WideWord
+import Data.Primitive.PrimArray
+import Data.Primitive.Ptr
+import Data.Word (Word8, Word64, byteSwap64)
+import Data.WideWord
 
-import           Foreign (allocaBytes)
-import           Foreign.Storable (Storable (..))
+import Foreign (allocaBytes)
+import Foreign.Storable (Storable (..))
 
-import           Hedgehog (Property, (===), discover)
-import qualified Hedgehog as H
-import qualified Hedgehog.Gen as Gen
-import qualified Hedgehog.Range as Range
+import Hedgehog (Property, (===), discover)
+import Hedgehog qualified as H
+import Hedgehog.Gen qualified as Gen
+import Hedgehog.Range qualified as Range
 
 import Test.Data.WideWord.Gen
 

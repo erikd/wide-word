@@ -1,30 +1,31 @@
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Test.Data.WideWord.Word128
   ( tests
   ) where
 
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad (unless)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad (unless)
 
-import qualified Data.Binary as Binary
-import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
+import Data.Binary qualified as Binary
+import Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
-import           Data.Int (Int32)
-import           Data.Primitive.PrimArray (primArrayFromList, primArrayToList, readPrimArray,
+import Data.Int (Int32)
+import Data.Primitive.PrimArray (primArrayFromList, primArrayToList, readPrimArray,
                    setPrimArray, unsafeFreezePrimArray, unsafeThawPrimArray, writePrimArray)
-import           Data.Primitive.Ptr (readOffPtr, writeOffPtr)
-import           Data.Word (Word8, Word64, byteSwap64)
-import           Data.WideWord
+import Data.Primitive.Ptr (readOffPtr, writeOffPtr)
+import Data.Word (Word8, Word64, byteSwap64)
+import Data.WideWord
 
-import           Foreign (allocaBytes)
-import           Foreign.Storable (Storable (..))
+import Foreign (allocaBytes)
+import Foreign.Storable (Storable (..))
 
-import           Hedgehog (Property, (===), discover)
-import qualified Hedgehog as H
-import qualified Hedgehog.Gen as Gen
-import qualified Hedgehog.Range as Range
+import Hedgehog (Property, (===), discover)
+import Hedgehog qualified as H
+import Hedgehog.Gen qualified as Gen
+import Hedgehog.Range qualified as Range
 
-import           Test.Data.WideWord.Gen
+import Test.Data.WideWord.Gen
 
 
 -- Set the number of times to run each property test here.
