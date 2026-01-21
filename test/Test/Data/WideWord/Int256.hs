@@ -9,6 +9,7 @@ import           Control.Monad (unless)
 import qualified Data.Binary as Binary
 import           Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
+import           Data.Int (Int32)
 import           Data.Primitive.PrimArray
 import           Data.Primitive.Ptr
 import           Data.Word (Word64, Word8)
@@ -93,7 +94,7 @@ prop_pred =
 prop_toEnum_fromEnum :: Property
 prop_toEnum_fromEnum =
   propertyCount $ do
-    a0 <- H.forAll genWord32
+    a0 <- H.forAll $ Gen.integral (Range.linear 0 (maxBound :: Int32))
     let i256 = Int256 0 0 0 (fromIntegral a0)
         e256 = fromEnum i256
     toInteger e256 === toInteger a0
