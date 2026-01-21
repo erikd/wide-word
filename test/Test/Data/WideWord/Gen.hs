@@ -1,11 +1,12 @@
+{-# LANGUAGE ImportQualifiedPost #-}
 module Test.Data.WideWord.Gen where
 
-import           Data.WideWord
-import           Data.Word (Word32, Word64)
+import Data.WideWord
+import Data.Word (Word32, Word64)
 
-import           Hedgehog (Gen)
-import qualified Hedgehog.Gen as Gen
-import qualified Hedgehog.Range as Range
+import Hedgehog (Gen)
+import Hedgehog.Gen qualified as Gen
+import Hedgehog.Range qualified as Range
 
 
 genInt128 :: Gen Int128

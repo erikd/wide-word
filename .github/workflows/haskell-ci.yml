@@ -8,14 +8,15 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.19.20250801
+# version: 0.19.20260104
 #
-# REGENDATA ("0.19.20250801",["github","cabal.project"])
+# REGENDATA ("0.19.20260104",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
   - push
   - pull_request
+  - merge_group
 jobs:
   linux:
     name: Haskell-CI - Linux - ${{ matrix.compiler }}
@@ -28,14 +29,19 @@ jobs:
     strategy:
       matrix:
         include:
+          - compiler: ghc-9.14.1
+            compilerKind: ghc
+            compilerVersion: 9.14.1
+            setup-method: ghcup
+            allow-failure: false
           - compiler: ghc-9.12.2
             compilerKind: ghc
             compilerVersion: 9.12.2
             setup-method: ghcup
             allow-failure: false
-          - compiler: ghc-9.10.2
+          - compiler: ghc-9.10.3
             compilerKind: ghc
-            compilerVersion: 9.10.2
+            compilerVersion: 9.10.3
             setup-method: ghcup
             allow-failure: false
           - compiler: ghc-9.8.4
@@ -68,27 +74,12 @@ jobs:
             compilerVersion: 8.10.7
             setup-method: ghcup
             allow-failure: false
-          - compiler: ghc-8.8.4
-            compilerKind: ghc
-            compilerVersion: 8.8.4
-            setup-method: ghcup
-            allow-failure: false
-          - compiler: ghc-8.6.5
-            compilerKind: ghc
-            compilerVersion: 8.6.5
-            setup-method: ghcup
-            allow-failure: false
-          - compiler: ghc-8.4.4
-            compilerKind: ghc
-            compilerVersion: 8.4.4
-            setup-method: ghcup
-            allow-failure: false
       fail-fast: false
     steps:
       - name: apt-get install
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common libtinfo5 libnuma-dev
+          apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common libtinfo5
       - name: Install GHCup
         run: |
           mkdir -p "$HOME/.ghcup/bin"
@@ -173,7 +164,7 @@ jobs:
           chmod a+x $HOME/.cabal/bin/cabal-plan
           cabal-plan --version
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: source
       - name: initial cabal.project for sdist
@@ -204,6 +195,31 @@ jobs:
           if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "package wide-word" >> cabal.project ; fi
           if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "    ghc-options: -Werror=incomplete-patterns -Werror=incomplete-uni-patterns" >> cabal.project ; fi
           cat >> cabal.project <<EOF
+          tests:             True
+          test-show-details: direct
+
+          if impl ( ghc >= 9.14 )
+            allow-newer:
+              , aeson:containers
+              , aeson:indexed-traversable
+              , aeson:semialign
+              , aeson:template-haskell
+              , aeson:time
+              , binary:containers
+              , boring:base
+              , constraints:boring
+              , indexed-traversable:base
+              , indexed-traversable:containers
+              , indexed-traversable-instances:base
+              , semialign:base
+              , semialign:containers
+              , template-haskell:base
+              , text:binary
+              , text-iso8601:time
+              , these:base
+              , time-compat:base
+              , time-compat:time
+              , uuid-types:template-haskell
           EOF
           $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: any.$_ installed\n" unless /^(wide-word)$/; }' >> cabal.project.local
           cat cabal.project

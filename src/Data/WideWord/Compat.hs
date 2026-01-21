@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE StrictData #-}
 #if MIN_VERSION_base(4,17,0)
@@ -27,7 +28,7 @@ module Data.WideWord.Compat
   ) where
 
 #if MIN_VERSION_base(4,17,0)
-import qualified GHC.Base
+import GHC.Base qualified
 import GHC.Exts (Word64#, wordToWord64#, word64ToWord#, Int64#)
 #else
 import GHC.Base (Int#, Word#, quotRemWord2#, int2Word#, subWordC#, plusWord2#, or#, minusWord#,
