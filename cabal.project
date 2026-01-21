@@ -10,53 +10,22 @@ test-show-details: direct
 if impl (ghc >= 9.14)
   allow-newer:
     , aeson:containers
+    , aeson:indexed-traversable
+    , aeson:semialign
     , aeson:template-haskell
     , aeson:time
-    , assoc:base
-    , async:base
-    , bifunctors:template-haskell
+    , binary:containers
     , boring:base
-    , data-fix:base
-    , directory:base
-    , filepath:os-string
-    , generically:base
-    , hashable:base
-    , hashable:containers
-    , hashable:ghc-bignum
-    , hedgehog:template-haskell
-    , hedgehog:time
-    , hsc2hs:base
-    , hsc2hs:process
+    , constraints:boring
     , indexed-traversable:base
     , indexed-traversable:containers
     , indexed-traversable-instances:base
-    , integer-conversion:base
-    , integer-logarithms:base
-    , integer-logarithms:ghc-bignum
-    , lifted-async:base
-    , OneTuple:base
-    , os-string:template-haskell
-    , primitive:base
-    , scientific:base
-    , scientific:containers
-    , scientific:template-haskell
     , semialign:base
     , semialign:containers
-    , splitmix:base
-    , tagged:template-haskell
-    , text:template-haskell
-    , text-short:base
+    , template-haskell:base
+    , text:binary
     , text-iso8601:time
-    , text-short:template-haskell
+    , these:base
     , time-compat:base
     , time-compat:time
-    , th-abstraction:template-haskell
-    , th-compat:template-haskell
-    , these:base
-    , transformers:base
-    , unordered-containers:template-haskell
-    , uuid-types:hashable
     , uuid-types:template-haskell
-    , vector:base
-    , vector-stream:base
-    , witherable:containers
