@@ -6,6 +6,9 @@
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
+
+#include <MachDeps.h>
+
 module Data.WideWord.Int256
   ( Int256 (..)
   , byteSwapInt256
