@@ -1,5 +1,11 @@
 # Revision history for wide-word
 
+## 0.1.9.0 -- 2026-01-21
+
+* Add Int256 type contributed by Dmitry Kovalev.
+* Fixed 32 bit support and CI from Bodgrim.
+* Fix inclusion of MachDeps.h C header file from Bodgrim.
+
 ## 0.1.8.1 -- 2025-09-13
 
 * Reintroduce Data instances that were incorrectly removed in 0.1.8.0.
