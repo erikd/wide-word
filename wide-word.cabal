@@ -111,7 +111,7 @@ test-suite laws
   hs-source-dirs:    test
 
   build-depends:       base
-                     , QuickCheck                    >= 2.9.2       && < 2.18
+                     , QuickCheck                    >= 2.9.2       && < 2.19
                      , quickcheck-classes            >= 0.6.3       && < 0.7.0
                      , primitive
                      , semirings                     >= 0.2         && < 0.8
