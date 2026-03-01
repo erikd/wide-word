@@ -9,11 +9,11 @@ test-show-details: direct
 
 if impl (ghc >= 9.14)
   allow-newer:
+    , aeson:QuickCheck
     , aeson:containers
     , aeson:indexed-traversable
     , aeson:semialign
     , aeson:template-haskell
-    , aeson:time
     , binary:containers
     , boring:base
     , constraints:boring
@@ -24,8 +24,5 @@ if impl (ghc >= 9.14)
     , semialign:containers
     , template-haskell:base
     , text:binary
-    , text-iso8601:time
     , these:base
-    , time-compat:base
-    , time-compat:time
     , uuid-types:template-haskell
