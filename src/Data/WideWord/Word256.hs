@@ -37,7 +37,7 @@ import Control.DeepSeq (NFData (..))
 
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
 import Data.Data (Data)
-import Data.Ix (Ix)
+import Data.Ix (Ix (..))
 #if ! MIN_VERSION_base(4,11,0)
 import Data.Semigroup ((<>))
 #endif
@@ -68,7 +68,7 @@ data Word256 = Word256
   , word256m0 :: !Word64
   , word256lo :: !Word64
   }
-  deriving (Eq, Data, Generic, Ix)
+  deriving (Eq, Data, Generic)
 
 instance Hashable Word256 where
   hashWithSalt s (Word256 a1 a2 a3 a4) =
@@ -110,6 +110,16 @@ instance Ord Word256 where
 instance Bounded Word256 where
   minBound = zeroWord256
   maxBound = Word256 maxBound maxBound maxBound maxBound
+
+-- A derived instance would treat each 64 bit word as a separate dimension
+-- rather than treating the value as a single number.
+instance Ix Word256 where
+  range (a, b) = enumFromTo256 a b
+  index b@(a, _) i
+    | inRange b i = toInt (i - a)
+    | otherwise =
+        error ("Ix{Word256}.index: Index (" ++ show i ++ ") out of range (" ++ show b ++ ")")
+  inRange (a, b) i = a <= i && i <= b
 
 instance Enum Word256 where
   succ = succ256
