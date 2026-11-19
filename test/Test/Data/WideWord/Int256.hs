@@ -140,6 +140,25 @@ prop_signum =
     i256 <- H.forAll genInt256
     toInteger256 (signum i256) === signum (toInteger256 i256)
 
+-- Each `fromIntegral` here may be rewritten by one of the library's RULES, and
+-- those must agree with the `fromInteger . toInteger` definition.
+prop_fromIntegral_rules :: Property
+prop_fromIntegral_rules =
+  propertyCount $ do
+    i <- H.forAll $ Gen.int Range.constantBounded
+    w <- H.forAll $ Gen.word Range.constantBounded
+    w32 <- H.forAll $ Gen.word32 Range.constantBounded
+    w64 <- H.forAll genWord64
+    x <- H.forAll genInt256
+    (fromIntegral i :: Int256) === fromInteger (toInteger i)
+    (fromIntegral w :: Int256) === fromInteger (toInteger w)
+    (fromIntegral w32 :: Int256) === fromInteger (toInteger w32)
+    (fromIntegral w64 :: Int256) === fromInteger (toInteger w64)
+    (fromIntegral x :: Int) === fromInteger (toInteger x)
+    (fromIntegral x :: Word) === fromInteger (toInteger x)
+    (fromIntegral x `asTypeOf` w32) === fromInteger (toInteger x)
+    (fromIntegral x `asTypeOf` w64) === fromInteger (toInteger x)
+
 prop_fromInteger :: Property
 prop_fromInteger =
   propertyCount $ do
