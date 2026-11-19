@@ -46,7 +46,7 @@ import Foreign.Ptr (Ptr, castPtr)
 import Foreign.Storable (Storable (..))
 
 import GHC.Base (Int (..))
-import GHC.Enum (predError, succError)
+import GHC.Enum (fromEnumError, predError, succError, toEnumError)
 import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
 import GHC.Generics (Generic)
 import GHC.Real ((%))
@@ -116,6 +116,10 @@ instance Enum Word256 where
   pred = pred256
   toEnum = toEnum256
   fromEnum = fromEnum256
+  enumFrom x = enumFromTo256 x maxBound
+  enumFromThen x y = enumFromThenTo256 x y (if y >= x then maxBound else minBound)
+  enumFromTo = enumFromTo256
+  enumFromThenTo = enumFromThenTo256
 
 instance Num Word256 where
   (+) = plus256
@@ -295,11 +299,30 @@ pred256 (Word256 a3 a2 a1 a0)
 
 {-# INLINABLE toEnum256 #-}
 toEnum256 :: Int -> Word256
-toEnum256 i = Word256 0 0 0 (toEnum i)
+toEnum256 i
+  | i < 0 = toEnumError "Word256" i (minBound :: Word256, maxBound :: Word256)
+  | otherwise = fromInt i
 
 {-# INLINABLE fromEnum256 #-}
 fromEnum256 :: Word256 -> Int
-fromEnum256 (Word256 _ _ _ a0) = fromEnum a0
+fromEnum256 x
+  | x > fromInt maxBound = fromEnumError "Word256" x
+  | otherwise = toInt x
+
+{-# INLINABLE enumFromTo256 #-}
+enumFromTo256 :: Word256 -> Word256 -> [Word256]
+enumFromTo256 x y
+  | x > y = []
+  | otherwise = go x
+  where
+    -- Stop at `y` before incrementing so that `y == maxBound` does not overflow.
+    go i = i : if i == y then [] else go (i + 1)
+
+-- Go via `Integer` to avoid having to deal with overflow at either bound.
+{-# INLINABLE enumFromThenTo256 #-}
+enumFromThenTo256 :: Word256 -> Word256 -> Word256 -> [Word256]
+enumFromThenTo256 x1 x2 y =
+  map fromInteger256 [toInteger256 x1, toInteger256 x2 .. toInteger256 y]
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Num` instance.
