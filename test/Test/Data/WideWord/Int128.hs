@@ -143,6 +143,63 @@ prop_signum =
     i128 <- H.forAll genInt128
     toInteger128 (signum i128) === signum (toInteger128 i128)
 
+prop_enumFromTo :: Property
+prop_enumFromTo =
+  propertyCount $ do
+    a <- H.forAll genInt128
+    n <- H.forAll $ Gen.int (Range.linear 0 20)
+    let b = a + fromIntegral n
+    map toInteger [a .. b] === [toInteger a .. toInteger b]
+
+prop_enumFromThenTo :: Property
+prop_enumFromThenTo =
+  propertyCount $ do
+    a <- H.forAll genInt128
+    step <- H.forAll $ Gen.filter (/= 0) (Gen.int (Range.linearFrom 0 (-5) 5))
+    n <- H.forAll $ Gen.int (Range.linear 0 10)
+    let b = a + fromIntegral step
+        c = a + fromIntegral (step * n)
+    map toInteger [a, b .. c] === [toInteger a, toInteger b .. toInteger c]
+
+prop_enumFrom_enumFromThen_bounds :: Property
+prop_enumFrom_enumFromThen_bounds =
+  propertyCount $ do
+    n <- H.forAll $ Gen.int (Range.linear 1 10)
+    let top = maxBound - fromIntegral n :: Int128
+        bottom = minBound + fromIntegral n :: Int128
+    map toInteger [top ..] === [toInteger top .. toInteger (maxBound :: Int128)]
+    map toInteger [top, top + 1 ..] === [toInteger top .. toInteger (maxBound :: Int128)]
+    map toInteger [bottom, bottom - 1 ..]
+      === [toInteger bottom, toInteger bottom - 1 .. toInteger (minBound :: Int128)]
+
+prop_toEnum_Int :: Property
+prop_toEnum_Int =
+  propertyCount $ do
+    i <- H.forAll $ Gen.int Range.constantBounded
+    r <- liftIO $ tryMaybe (toEnum i :: Int128)
+    r === if True || i >= 0 then Just (fromInteger (toInteger i)) else Nothing
+    case r of
+      Just x -> fromEnum x === i
+      Nothing -> pure ()
+
+prop_fromEnum_range :: Property
+prop_fromEnum_range =
+  propertyCount $ do
+    x <- H.forAll $ Gen.choice [genInt128, fromInteger . toInteger <$> Gen.int Range.constantBounded]
+    let xi = toInteger x
+    r <- liftIO $ tryMaybe (fromEnum x)
+    r === if xi >= toInteger (minBound :: Int) && xi <= toInteger (maxBound :: Int)
+            then Just (fromInteger xi)
+            else Nothing
+
+-- Evaluate a value, returning `Nothing` if that throws an exception.
+tryMaybe :: a -> IO (Maybe a)
+tryMaybe x =
+  either discard Just <$> try (evaluate x)
+  where
+    discard :: SomeException -> Maybe b
+    discard _ = Nothing
+
 -- Each `fromIntegral` here may be rewritten by one of the library's RULES, and
 -- those must agree with the `fromInteger . toInteger` definition.
 prop_fromIntegral_rules :: Property
