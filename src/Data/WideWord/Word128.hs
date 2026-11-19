@@ -7,6 +7,8 @@
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
+-- See the comment on the rewrite rules for why this warning is disabled.
+{-# OPTIONS_GHC -Wno-inline-rule-shadowing #-}
 
 -----------------------------------------------------------------------------
 ---- |
@@ -187,6 +189,21 @@ instance Prim Word128 where
 
 -- -----------------------------------------------------------------------------
 -- Rewrite rules.
+--
+-- These rules let `fromIntegral` between `Word128` and the standard fixed width
+-- types skip the default `fromInteger . toInteger` round trip via `Integer`.
+--
+-- In recent versions of base, `fromIntegral` has an INLINE pragma without a
+-- phase, so GHC may inline it before these rules get a chance to match (for
+-- example inside a polymorphic function that is only later specialised to
+-- `Word128`). GHC reports this with -Winline-rule-shadowing. Its suggested fix,
+-- adding a phase to the INLINE pragma, can only be made to `fromIntegral` in
+-- base itself, so that warning is disabled for this module instead.
+--
+-- Since whether or not a rule fires depends on the context, every rule MUST
+-- give exactly the same result as `fromInteger . toInteger`. The rules are an
+-- optimisation only. In particular, conversion from `Int` must sign extend.
+-- The `prop_fromIntegral_rules` test checks this.
 
 {-# RULES
 "fromIntegral :: Word128 -> Word128" fromIntegral = id :: Word128 -> Word128
@@ -204,7 +221,7 @@ instance Prim Word128 where
 
 {-# INLINE fromInt #-}
 fromInt :: Int -> Word128
-fromInt = Word128 0 . fromIntegral
+fromInt i = Word128 (if i < 0 then maxBound else 0) (fromIntegral i)
 
 {-# INLINE fromWord #-}
 fromWord :: Word -> Word128
