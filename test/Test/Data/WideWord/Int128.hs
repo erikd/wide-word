@@ -12,6 +12,7 @@ import Data.Bifunctor (first)
 import Data.Binary qualified as Binary
 import Data.Bits ((.&.), (.|.), bit, complement, countLeadingZeros, countTrailingZeros
                             , popCount, rotateL, rotateR, shiftL, shiftR, testBit, xor)
+import Data.Ix (inRange, index, range, rangeSize)
 import Data.Int (Int32)
 import Data.Primitive.PrimArray
 import Data.Primitive.Ptr
@@ -191,6 +192,21 @@ prop_fromEnum_range =
     r === if xi >= toInteger (minBound :: Int) && xi <= toInteger (maxBound :: Int)
             then Just (fromInteger xi)
             else Nothing
+
+prop_ix :: Property
+prop_ix =
+  propertyCount $ do
+    a <- H.forAll genInt128
+    n <- H.forAll $ Gen.int (Range.linear 0 10)
+    k <- H.forAll $ Gen.int (Range.linear (-2) 12)
+    let b = a + fromIntegral n
+        x = a + fromIntegral k
+        bi = (toInteger a, toInteger b)
+    map toInteger (range (a, b)) === range bi
+    inRange (a, b) x === inRange bi (toInteger x)
+    rangeSize (a, b) === rangeSize bi
+    r <- liftIO $ tryMaybe (index (a, b) x)
+    r === if inRange bi (toInteger x) then Just (index bi (toInteger x)) else Nothing
 
 -- Evaluate a value, returning `Nothing` if that throws an exception.
 tryMaybe :: a -> IO (Maybe a)
