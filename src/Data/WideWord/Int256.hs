@@ -88,7 +88,7 @@ showHexInt256 (Int256 a3 a2 a1 a0)
     zeros2 = replicate (16 - length h2) '0'
 
 instance Show Int256 where
-  show = show . toInteger
+  showsPrec p = showsPrec p . toInteger
 
 instance Read Int256 where
   readsPrec p s = [(fromInteger256 (x :: Integer), r) | (x, r) <- readsPrec p s]

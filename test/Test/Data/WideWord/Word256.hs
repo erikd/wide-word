@@ -212,6 +212,13 @@ prop_ix =
     r <- liftIO $ tryMaybe (index (a, b) x)
     r === if inRange bi (toInteger x) then Just (index bi (toInteger x)) else Nothing
 
+prop_showsPrec :: Property
+prop_showsPrec =
+  propertyCount $ do
+    x <- H.forAll genWord256
+    showsPrec 11 x "" === showsPrec 11 (toInteger x) ""
+    read (show (Just x)) === Just x
+
 -- Evaluate a value, returning `Nothing` if that throws an exception.
 tryMaybe :: a -> IO (Maybe a)
 tryMaybe x =
