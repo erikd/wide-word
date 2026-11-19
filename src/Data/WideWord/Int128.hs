@@ -95,7 +95,7 @@ showHexInt128 (Int128 a1 a0)
     zeros = replicate (16 - length h0) '0'
 
 instance Show Int128 where
-  show = show . toInteger
+  showsPrec p = showsPrec p . toInteger
 
 instance Read Int128 where
   readsPrec p s = [(fromInteger128 (x :: Integer), r) | (x, r) <- readsPrec p s]
