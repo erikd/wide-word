@@ -36,7 +36,7 @@ module Data.WideWord.Int128
 import Control.DeepSeq (NFData (..))
 
 import Data.Bits (Bits (..), FiniteBits (..), shiftL)
-import Data.Data (Data, Typeable)
+import Data.Data (Data)
 import Data.Ix (Ix)
 #if ! MIN_VERSION_base(4,11,0)
 import Data.Semigroup ((<>))
