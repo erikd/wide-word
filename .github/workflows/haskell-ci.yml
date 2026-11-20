@@ -8,15 +8,16 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.19.20260104
+# version: 0.19.20261010
 #
-# REGENDATA ("0.19.20260104",["github","cabal.project"])
+# REGENDATA ("0.19.20261010",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
   - push
   - pull_request
   - merge_group
+  - workflow_dispatch
 jobs:
   linux:
     name: Haskell-CI - Linux - ${{ matrix.compiler }}
@@ -24,7 +25,7 @@ jobs:
     timeout-minutes:
       60
     container:
-      image: buildpack-deps:jammy
+      image: buildpack-deps:noble
     continue-on-error: ${{ matrix.allow-failure }}
     strategy:
       matrix:
@@ -79,7 +80,7 @@ jobs:
       - name: apt-get install
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common libtinfo5
+          apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common
       - name: Install GHCup
         run: |
           mkdir -p "$HOME/.ghcup/bin"
@@ -164,7 +165,7 @@ jobs:
           chmod a+x $HOME/.cabal/bin/cabal-plan
           cabal-plan --version
       - name: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           path: source
       - name: initial cabal.project for sdist
@@ -195,31 +196,6 @@ jobs:
           if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "package wide-word" >> cabal.project ; fi
           if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "    ghc-options: -Werror=incomplete-patterns -Werror=incomplete-uni-patterns" >> cabal.project ; fi
           cat >> cabal.project <<EOF
-          tests:             True
-          test-show-details: direct
-
-          if impl ( ghc >= 9.14 )
-            allow-newer:
-              , aeson:containers
-              , aeson:indexed-traversable
-              , aeson:semialign
-              , aeson:template-haskell
-              , aeson:time
-              , binary:containers
-              , boring:base
-              , constraints:boring
-              , indexed-traversable:base
-              , indexed-traversable:containers
-              , indexed-traversable-instances:base
-              , semialign:base
-              , semialign:containers
-              , template-haskell:base
-              , text:binary
-              , text-iso8601:time
-              , these:base
-              , time-compat:base
-              , time-compat:time
-              , uuid-types:template-haskell
           EOF
           $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: any.$_ installed\n" unless /^(wide-word)$/; }' >> cabal.project.local
           cat cabal.project
@@ -229,11 +205,11 @@ jobs:
           $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH --dry-run all
           cabal-plan
       - name: restore cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ github.sha }}
+          key: noble-${{ matrix.compiler }}-${{ github.sha }}
           path: ~/.cabal/store
-          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-
+          restore-keys: noble-${{ matrix.compiler }}-
       - name: install dependencies
         run: |
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --dependencies-only -j2 all
@@ -260,7 +236,7 @@ jobs:
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
       - name: save cache
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ github.sha }}
+          key: noble-${{ matrix.compiler }}-${{ github.sha }}
           path: ~/.cabal/store
