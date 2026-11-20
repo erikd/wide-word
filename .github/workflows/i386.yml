@@ -18,7 +18,10 @@ jobs:
         apt-get update -y
         apt-get install -y autoconf build-essential zlib1g-dev libgmp-dev curl libncurses5 libtinfo5 libncurses5-dev libtinfo-dev
         curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | BOOTSTRAP_HASKELL_NONINTERACTIVE=1 BOOTSTRAP_HASKELL_INSTALL_NO_STACK=1 BOOTSTRAP_HASKELL_GHC_VERSION=9.6.6 sh
-    - uses: actions/checkout@v1
+    # v1 is implemented inside the runner rather than in Node.js, so unlike
+    # later versions it works in this 32-bit container. It cannot be told not
+    # to persist credentials; the read-only token limits what they allow.
+    - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
     - name: Test
       run: |
         export LANG=C.UTF-8

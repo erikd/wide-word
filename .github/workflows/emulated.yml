@@ -21,7 +21,7 @@ jobs:
         arch: ['s390x']
     steps:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-    - uses: uraimo/run-on-arch-action@v3
+    - uses: uraimo/run-on-arch-action@1e2c619f81e6d8609845ea1d2f443a778df1ac68 # v3
       timeout-minutes: 60
       with:
         arch: ${{ matrix.arch }}
