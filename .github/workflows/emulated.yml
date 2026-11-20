@@ -3,6 +3,9 @@ on:
   - push
   - pull_request
 
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash
@@ -15,6 +18,9 @@ jobs:
   # `ghc --make` manually, and even so `ghc -O` is prohibitively expensive.
   emulated:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # run-on-arch caches its container image in ghcr.io
     strategy:
       fail-fast: true
       matrix:
