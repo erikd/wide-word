@@ -12,7 +12,9 @@ defaults:
 
 jobs:
   i386:
-    runs-on: ubuntu-latest
+    # Was ubuntu-latest, but DNS for `archive.ubuntu.com` was failing so
+    # we downgrade for now.
+    runs-on: ubuntu-24.04
     container:
       image: i386/ubuntu:bionic
     steps:
