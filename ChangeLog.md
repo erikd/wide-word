@@ -1,5 +1,14 @@
 # Revision history for wide-word
 
+## 0.2.0.0 -- 2026-11-20
+
+* Version number bump due significant changes to fromEnum behavior.
+* Minor code changes and dependency bounds updates.
+* Fix sign extension in fromIntegral rewrite rules from Int.
+* Fix Enum instances for values outside the range of Int.
+* Replace derived Ix instances with ones treating the value as a number.
+* Fix Show instances for Int128 and Int256 to respect precedence.
+
 ## 0.1.9.0 -- 2026-01-21
 
 * Add Int256 type contributed by Dmitry Kovalev.
